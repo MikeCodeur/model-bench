@@ -99,42 +99,93 @@ bench run --model kimi-k2                       # toute la suite, nouveau run
 bench run --model kimi-k2 --category 3d         # une catégorie
 bench run --model kimi-k2 --ids 3d-06,web-01    # quelques tests
 bench run --model kimi-k2 --run 2026-09-23-a --ids 3d-06   # relance = nouvelle tentative
+bench run --model kimi-k2 --ids ... --budget 5 --timeout 15  # surcharge des garde-fous
 ```
+
+Avant de lancer, le runner affiche le plan (modèle, tests, timeout, coût max estimé) et attend une confirmation.
 
 Pour chaque test, le runner :
 
 1. crée un dossier de travail temporaire et vide, hors du repo et hors des résultats : `$TMPDIR/model-bench/<id-aléatoire>/` ;
-2. exécute la commande du modèle dans ce dossier, avec un timeout global (30 min par défaut) ;
-3. enregistre sortie, durée et code de sortie ;
-4. copie le code produit dans les résultats, sans `node_modules`, `.next`, `dist` ni caches, puis supprime le dossier de travail ;
-5. écrit `attempt.json`.
+2. exécute la commande du modèle dans ce dossier, sans entrée clavier, dans son propre groupe de processus ;
+3. enregistre la sortie brute, la durée et le code de sortie ;
+4. vérifie qu'aucun processus ni port ouvert par l'agent ne subsiste ;
+5. copie le code produit dans les résultats, sans `node_modules`, `.next`, `dist` ni caches, puis supprime le dossier de travail ;
+6. écrit `attempt.json`.
 
 Le modèle ne travaille jamais dans le repo ni dans le dossier de résultats : il n'a sous les yeux ni le catalogue ni les sorties des autres modèles. L'isolation complète viendra avec Docker.
 
 Règles d'équité : même prompt, même timeout, workspace neuf, aucune intervention humaine pendant une tentative.
+
+## Partie 1 — Garde-fous
+
+Aucun agent ne peut tourner indéfiniment ni dépenser sans limite ; tout se règle dans un fichier de défauts, surchargeable par run.
+
+| Garde-fou | Effet | Défaut |
+| --- | --- | --- |
+| Timeout dur | tue l'agent et tout son groupe de processus (serveurs, sous-agents) ; statut `timeout` | 30 min |
+| Timeout d'inactivité | aucune sortie ni fichier modifié : l'agent est tué ; statut `stalled` | 5 min |
+| Pas d'entrée clavier | une commande interactive échoue au lieu d'attendre | toujours |
+| Confirmation | plan affiché, lancement seulement après oui | toujours |
+| Budget par run | plus de nouveau test au-delà du plafond, si le coût est connu | 20 $ |
+| Tentatives max par test | empêche les relances en boucle | 3 |
+| Concurrence | un test à la fois | 1 |
+| Arrêt sur rate limit | quota ou limite de débit : le run s'arrête au lieu d'enchaîner les faux échecs | activé |
+| Ctrl+C | arrête tout, tentative marquée `aborted`, production conservée | activé |
+| Aucune relance automatique | le runner ne relance jamais un test seul | toujours |
+
+```json
+{ "timeout_min": 30, "idle_timeout_min": 5, "run_budget_usd": 20, "max_attempts": 3 }
+```
+
+Les limites propres à un CLI (nombre de tours, budget) s'ajoutent dans sa commande de `models.json` ; le runner n'a pas besoin de les connaître. Sur abonnement, le budget en dollars ne s'applique pas : timeout, rate limit et concurrence protègent.
+
+Pire cas : 10 tests = 10 × 30 min, puis arrêt.
+
+## Partie 1 — Contrat de lancement
+
+Tout projet livré démarre d'une seule façon connue, quelle que soit la stack choisie par le modèle (Three.js, React, Vite, Next, Canvas…).
+
+| Forme | Quand | Démarrage |
+| --- | --- | --- |
+| Statique | aucune dépendance, JS pur | `index.html` à la racine, servi tel quel |
+| Node | tout le reste | `pnpm install && pnpm start`, serveur sur la variable `PORT` |
+
+- Pas de Python ni d'autre runtime à installer.
+- Dépendances via npm, jamais via CDN : le rendu tourne sans réseau et reste identique dans le temps.
+- Projet sans interface : `pnpm test` obligatoire en plus.
+- Le contrat est ajouté à `common_contract`, donc à tous les prompts.
+
+```bash
+bench open kimi-k2/2026-09-23-a/3d-06
+```
+
+`bench open` détecte la forme, installe, démarre sur un port libre et ouvre le navigateur. Un projet qui ne démarre pas avec le contrat est un échec du modèle, enregistré `start: ko`, jamais à réparer à la main. Le cockpit reprendra ce même mécanisme derrière un bouton « Lancer ».
 
 ## Partie 1 — Ce qui est sauvegardé
 
 Tout est en JSON, dans un dossier par tentative ; pas de base de données en v1.
 
 ```
-~/model-bench-data/                 # configurable via MODEL_BENCH_DATA
+~/model-bench-data/                 # clone du repo GitHub model-bench-results, configurable via MODEL_BENCH_DATA
   <model>/<run>/
-    run.json                        # modèle, commande, tests sélectionnés, totaux
+    run.json                        # modèle, commande, tests sélectionnés, garde-fous, totaux
     <test>/attempt-<n>/
       PROMPT.md                     # prompt exact envoyé
       command.txt                   # commande exacte lancée
       attempt.json
-      output.log
+      output.log                    # sortie brute complète du CLI (JSON quand il en propose)
       workspace/                    # code produit + lockfile, sans dépendances
 ```
 
-Rejouer un projet : `cd workspace && pnpm install && pnpm dev` (ou l'équivalent du projet).
-
 ```json
 {
+  "schema_version": 1,
   "model": "kimi-k2", "test": "3d-06-black-hole-lensing", "run": "2026-09-23-a", "attempt": 2,
+  "model_id": "moonshotai/kimi-k2", "cli_version": "opencode 1.2.3",
+  "suite_commit": "d539677", "env": { "os": "macOS 26.5", "node": "24.x", "pnpm": "10.x" },
   "started_at": "2026-09-23T14:02:11Z", "duration_s": 412, "exit_code": 0, "status": "ok",
+  "start": null,
   "tokens": { "input": null, "output": null },
   "cost_usd": null,
   "score": null,
@@ -142,10 +193,15 @@ Rejouer un projet : `cd workspace && pnpm install && pnpm dev` (ou l'équivalent
 }
 ```
 
+**Règle : on stocke le brut maintenant, on calcule plus tard.** Ce qui ne se retrouve pas après coup est capturé dès le premier run : sortie brute du CLI, identifiant exact du modèle et version du CLI, commit de la suite, environnement, durée et statut, code et lockfile. Scores, captures, tokens et coût se recalculent ensuite à partir de ce brut.
+
+- `status` : `ok`, `error`, `timeout`, `stalled`, `rate_limited` ou `aborted`.
 - Une valeur inconnue vaut `null`, jamais `0`.
 - Le coût vaut tokens × `price` quand les deux sont connus.
+- `schema_version` permet au cockpit de lire ou migrer les anciens runs.
 - Extensible : on ajoute un champ quand on en a besoin ; les lecteurs ignorent les champs qu'ils ne connaissent pas.
-- Les résultats restent hors du repo et hors Git en v1.
+
+**Historique sur GitHub** : les résultats vivent dans un repo séparé, `model-bench-results`, dont `~/model-bench-data/` est le clone. Un commit et un push après chaque run. Le repo de code reste léger, l'historique des résultats est versionné et peut être rendu public pour que l'audience vérifie le code généré. Sans dépendances, une tentative pèse quelques Mo ; limites GitHub : 100 Mo par fichier, environ 5 Go par repo confortable. Les vidéos de capture passeront par Git LFS ou R2.
 
 ## Partie 1 — Extensions prévues (hors v1)
 
@@ -153,11 +209,11 @@ Chaque extension ajoute un champ ou une étape, sans refonte.
 
 | Extension | Ce qu'elle ajoute | Déclencheur |
 | --- | --- | --- |
-| Parser par CLI | tokens et coût réels lus dans la sortie | quand on veut comparer les coûts |
+| Parser par CLI | tokens et coût réels lus dans la sortie brute | quand on veut comparer les coûts |
 | Captures Playwright | screenshots et vidéo de 5 s dans `captures/` | avant la première vidéo |
-| Delivery gate | install, build et démarrage en ok ou ko | idem |
+| Delivery gate automatique | install, build et démarrage testés à la fin de chaque tentative | idem |
 | Scoring | note manuelle ou juge IA dans `score` | après 2 modèles comparés |
-| Stockage distant | copie de `~/model-bench-data/` vers S3 ou R2 | quand le disque local gêne |
+| Vidéos lourdes | Git LFS ou R2 pour les captures vidéo | quand les captures arrivent |
 | Index SQLite | base générée depuis les JSON | seulement si la visualisation rame |
 
 ## Partie 2 — Visualiser (plus tard)
@@ -179,6 +235,7 @@ Contrainte posée dès la partie 1 : le format de `run.json` et `attempt.json` d
 - [ ] Exécution en local sur le Mac, ou dans un conteneur Docker pour isoler les agents en mode sans permission ?
 - [ ] Langage du runner : garder Python, ou passer en TypeScript pour partager les types avec la visualisation ?
 - [ ] Quels repos officiels importer en premier ?
+- [ ] Repo `model-bench-results` public ou privé ?
 
 ## Jalons
 
@@ -186,6 +243,6 @@ La v1 est finie quand le même lot de tests tourne sur deux modèles de fourniss
 
 | Jalon | Contenu | Critère de fin |
 | --- | --- | --- |
-| M1 — Runner v1 | `models.json`, `bench run`, `attempt.json` | 3 tests lancés sur 2 modèles de fournisseurs différents, relance incluse |
-| M2 — Captures | Playwright et delivery gate | captures exploitables dans une vidéo |
+| M1 — Runner v1 | `models.json`, `bench run`, `bench open`, garde-fous, contrat de lancement, `attempt.json`, repo `model-bench-results` | 10 tests lancés sur 2 modèles de fournisseurs différents, relance incluse, chaque projet ouvrable avec `bench open` |
+| M2 — Captures | Playwright et delivery gate automatique | captures exploitables dans une vidéo |
 | M3 — Visualisation | PRD dédié, puis galerie | hors partie 1 |
