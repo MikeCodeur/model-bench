@@ -1,5 +1,6 @@
 ---
-name: Model Bench Runner
+name: model-bench
+description: Préparer et piloter un run de la batterie model-bench sur un modèle (sélection de tests, workspaces isolés, métriques, rapport vidéo). Utiliser quand on demande de lancer un bench, tester un nouveau modèle ou préparer un run.
 status: draft
 created: 2026-09-23
 updated: 2026-09-23
