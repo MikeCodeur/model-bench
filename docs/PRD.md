@@ -67,6 +67,8 @@ La v1 tient en deux fichiers de config, une commande et un dossier par tentative
 
 Le runner ne connaît aucun fournisseur. Il lance une commande shell déclarée dans `models.json`, rien de plus. Claude, GPT, Kimi, Gemini, GLM, Qwen, DeepSeek ou un modèle local via Ollama : tous passent par le même chemin, sans code spécifique.
 
+**Abonnements d'abord.** Les modèles tournent via leur CLI officiel (Claude Code, Codex, Gemini CLI, Kimi CLI…) avec l'abonnement déjà payé, sans clé API. Plus tard, OpenRouter via OpenCode pourra servir d'option pour les modèles sans CLI ou pour une comparaison à harnais identique : c'est juste une autre commande dans `models.json`.
+
 ## Partie 1 — La batterie de tests
 
 `benchmarks.json` reste tel quel : ajouter un test, c'est ajouter une entrée.
@@ -89,6 +91,10 @@ Un nouveau modèle = une entrée dans `models.json` : un nom, une commande avec 
 ```
 
 Model IDs, prix et flags sont des exemples, à vérifier à l'implémentation. `price` est en USD par million de tokens.
+
+Champs optionnels : `model_id`, `version_command` (version du CLI enregistrée), `parser` (lecture des tokens et du coût), `billing` (`subscription` ou `api` ; sur abonnement, le budget en dollars ne s'applique pas).
+
+**Isolation de la config perso.** La commande doit empêcher le CLI de charger la config de l'utilisateur (instructions, skills, hooks, MCP), sinon le modèle testé bénéficie de règles que les autres n'ont pas. Pour Claude Code sur abonnement : `--setting-sources "" --strict-mcp-config --disable-slash-commands` (le mode `--bare` exige une clé API).
 
 ## Partie 1 — Lancer un run
 
@@ -161,6 +167,41 @@ bench open kimi-k2/2026-09-23-a/3d-06
 ```
 
 `bench open` détecte la forme, installe, démarre sur un port libre et ouvre le navigateur. Un projet qui ne démarre pas avec le contrat est un échec du modèle, enregistré `start: ko`, jamais à réparer à la main. Le cockpit reprendra ce même mécanisme derrière un bouton « Lancer ».
+
+## Partie 1 — Présenter un résultat
+
+Deux sources d'affichage : `bench open` montre ce que le runner sait, le projet montre ce que le modèle a construit.
+
+**Carte d'infos affichée par `bench open`** (panneau latéral autour du projet, aucun changement de prompt). Le prompt reste identique pour tous les modèles et le modèle ignore son propre nom, ce qui rend possible un mode aveugle. Liste à arbitrer :
+
+| # | Groupe | Donnée |
+| --- | --- | --- |
+| 1 | Test | Titre |
+| 2 | Test | ID |
+| 3 | Test | Catégorie et difficulté |
+| 4 | Test | Brief (ce qui a été demandé) |
+| 5 | Test | Critères d'acceptation |
+| 6 | Test | Provenance |
+| 7 | Run | Modèle et outil |
+| 8 | Run | Identifiant exact du modèle et version du CLI |
+| 9 | Run | Date et heure |
+| 10 | Run | ID du run et numéro de tentative |
+| 11 | Résultat | Statut |
+| 12 | Résultat | Durée |
+| 13 | Résultat | Coût (équivalent API sur abonnement) |
+| 14 | Résultat | Tokens (entrée, sortie, cache) |
+| 15 | Résultat | Démarre ou non |
+| 16 | Résultat | Fichiers et lignes de code produits |
+| 17 | Résultat | Note (quand le scoring existera) |
+| 18 | Interaction | Masquer ou afficher la carte (tournage plein écran) |
+| 19 | Interaction | Mode aveugle (masque modèle et coût) |
+| 20 | Interaction | Liens vers le prompt exact et le code |
+
+**Implémenté (v1)** : `bench open` affiche le projet en pleine page avec une barre d'une ligne en bas, en petits caractères : titre, ID, modèle et identifiant exact, date du run, tentative (et itération d'origine), stack détectée, durée, coût, statut. La stack est déduite du `package.json` et des API utilisées dans le code (Three.js, React, WebGL2, Canvas 2D…). La touche `i` masque la barre pour filmer.
+
+**Pilotage demandé au modèle** (dans le prompt) : les tests visuels et les jeux déclarent un champ `controls` dans `benchmarks.json` (21 tests sur 40, par exemple masse du trou noir, intensité du lentillage, inclinaison du disque). Le prompt contient alors une section « Pilotage » : panneau de réglages repliable, visible par défaut, modifiable en direct, valeurs par défaut = rendu de référence, bouton de remise à zéro. Les frontends et les tests agentiques n'en ont pas : leurs interactions font déjà partie du brief.
+
+Options encore à arbitrer côté prompt : titre discret dans l'app, aide des commandes (souris, clavier), compteur de FPS.
 
 ## Partie 1 — Ce qui est sauvegardé
 

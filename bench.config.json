@@ -1,0 +1,6 @@
+{
+  "timeout_min": 30,
+  "idle_timeout_min": 5,
+  "run_budget_usd": 20,
+  "max_attempts": 3
+}

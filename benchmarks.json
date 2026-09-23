@@ -45,7 +45,21 @@
   "common_contract": {
     "fresh_context": true,
     "network": "disabled-during-render",
-    "deliverables": ["README.md", "code source exécutable", "instructions de lancement", "tests ou auto-checks pertinents"],
+    "deliverables": ["README.md", "code source exécutable", "tests ou auto-checks pertinents"],
+    "controls": [
+      "Expose ces réglages dans un panneau repliable, visible par défaut, modifiables en direct sans rechargement.",
+      "Les valeurs par défaut produisent le rendu de référence décrit dans la mission.",
+      "Un bouton remet tous les réglages à leurs valeurs par défaut."
+    ],
+    "launch": [
+      "Le projet démarre d'une seule de ces deux façons, sans autre étape manuelle.",
+      "Forme statique : un index.html à la racine qui fonctionne servi tel quel par un serveur statique, sans dépendance.",
+      "Forme Node : pnpm install puis pnpm start ; le script start inclut le build si nécessaire et le serveur écoute sur le port de la variable d'environnement PORT.",
+      "Aucun autre runtime que Node (pas de Python, Docker ou base externe).",
+      "Dépendances installées via pnpm et verrouillées dans pnpm-lock.yaml, jamais chargées depuis un CDN : le rendu doit fonctionner sans réseau.",
+      "Projet sans interface : pnpm test exécute les tests.",
+      "Ne laisse aucun serveur ou processus tourner en tâche de fond : rends la main une fois le travail terminé."
+    ],
     "visual_viewports": ["1440x900", "390x844"],
     "motion_capture_seconds": 5,
     "required_metrics": ["statut", "durée", "tokens entrée", "tokens sortie", "coût", "erreurs console", "résultat des checks"],
@@ -66,6 +80,7 @@
       "video_timestamp": "08:40",
       "brief": "Créer une scène Three.js montrant un Rubik's Cube 5x5 initialement résolu. Deux commandes doivent mélanger le cube avec 25 mouvements valides puis rejouer exactement les inverses pour revenir à l'état initial. Les faces internes restent sombres et seules les faces externes portent les six couleurs.",
       "acceptance": ["125 cubies présents et géométriquement alignés", "mélange animé avec historique de 25 mouvements", "résolution par inversion exacte de l'historique", "retour final aux six faces uniformes", "orbit, zoom et reset fonctionnent"],
+      "controls": ["vitesse d'animation des mouvements", "nombre de mouvements du mélange (10 à 50)", "affichage de l'historique des mouvements"],
       "capture": "video"
     },
     {
@@ -77,6 +92,7 @@
       "video_timestamp": "09:07",
       "brief": "Construire une simulation 3D d'une tour de 24 caisses soumise à la gravité. L'utilisateur peut retirer une caisse, appliquer une impulsion latérale et réinitialiser la scène. Les collisions doivent être crédibles et les caisses ne doivent pas traverser le sol.",
       "acceptance": ["24 caisses visibles au démarrage", "retrait d'une caisse par clic", "effondrement influencé par la gravité et les collisions", "aucune caisse ne traverse le sol", "reset déterministe"],
+      "controls": ["gravité", "masse des caisses", "friction", "rebond (restitution)", "force de l'impulsion latérale"],
       "capture": "video"
     },
     {
@@ -88,6 +104,7 @@
       "video_timestamp": "11:28",
       "brief": "Créer une démonstration interactive de l'illusion du masque creux. Une tête concave tourne lentement avec un éclairage contrôlé, un bouton alterne vue concave et convexe, et des repères expliquent le changement de perception sans masquer l'objet.",
       "acceptance": ["géométrie concave lisible", "rotation automatique stable", "toggle concave/convexe", "éclairage réglable", "labels explicatifs lisibles"],
+      "controls": ["vitesse de rotation", "direction de la lumière (au-dessus / au-dessous)", "intensité de la lumière", "affichage des labels"],
       "capture": "video"
     },
     {
@@ -99,6 +116,7 @@
       "video_timestamp": "14:08",
       "brief": "Mettre en scène une courte histoire en quatre plans 3D avec deux personnages stylisés. Chaque plan doit changer cadrage, focale, position des personnages et lumière, avec une timeline permettant de lire la séquence comme une BD animée.",
       "acceptance": ["quatre plans distincts", "continuité spatiale des personnages", "cadrages réellement différents", "timeline et navigation plan par plan", "aucun élément important hors cadre"],
+      "controls": ["vitesse de lecture de la timeline", "lecture automatique ou plan par plan", "style de rendu (couleur / noir et blanc)"],
       "capture": "video"
     },
     {
@@ -110,6 +128,7 @@
       "video_timestamp": "14:31",
       "brief": "Créer un orrery interactif expliquant les saisons. La planète orbite autour d'une étoile avec un axe incliné constant dans l'espace. Afficher solstices, équinoxes, durée du jour et hémisphère actuellement le plus exposé.",
       "acceptance": ["axe incliné conserve son orientation", "orbite complète animée", "quatre jalons saisonniers corrects", "durée du jour évolue de façon cohérente", "pause et scrub temporel"],
+      "controls": ["inclinaison de l'axe (0 à 90 degrés)", "vitesse orbitale", "excentricité de l'orbite", "latitude observée pour la durée du jour"],
       "capture": "video"
     },
     {
@@ -121,6 +140,7 @@
       "video_timestamp": "14:58",
       "brief": "Rendre un trou noir centré avec horizon parfaitement sombre, disque d'accrétion presque vu par la tranche, arcs de lentillage au-dessus et au-dessous, anneau photonique et structure lumineuse en rotation. La caméra reste fixe pendant la capture.",
       "acceptance": ["horizon noir clairement délimité", "disque horizontal presque edge-on", "arcs de lentillage supérieurs et inférieurs", "rotation visible en cinq secondes", "fond étoilé sans artefact plein écran"],
+      "controls": ["masse du trou noir (taille de l'horizon)", "intensité du lentillage", "inclinaison du disque d'accrétion", "vitesse de rotation du disque", "température et luminosité du disque", "densité du fond étoilé"],
       "capture": "video"
     },
     {
@@ -132,6 +152,7 @@
       "video_timestamp": "15:18",
       "brief": "Créer six visages 3D stylisés partageant la même topologie et exprimant joie, peur, colère, tristesse, surprise et dégoût. Un sélecteur anime la transition entre les expressions et affiche les zones du visage qui changent.",
       "acceptance": ["six émotions sélectionnables", "identité du visage préservée", "transitions continues sans saut de maillage", "sourcils, yeux et bouche participent", "légende des zones modifiées"],
+      "controls": ["intensité de l'expression (0 à 100 %)", "vitesse de transition", "rotation du visage", "affichage des zones modifiées"],
       "capture": "video"
     },
     {
@@ -143,6 +164,7 @@
       "video_timestamp": "19:24",
       "brief": "Créer une galaxie spirale procédurale de plusieurs milliers de particules avec bulbe central, bras asymétriques, gradient de couleur et rotation différentielle. Ajouter des contrôles de densité, dispersion et vitesse.",
       "acceptance": ["au moins 5000 particules", "deux bras spiraux lisibles", "rotation différentielle visible", "contrôles modifient la scène sans rechargement", "60 secondes sans fuite mémoire manifeste"],
+      "controls": ["nombre de bras spiraux", "nombre de particules", "couleurs du bulbe et des bras"],
       "capture": "video"
     },
     {
@@ -154,6 +176,7 @@
       "video_timestamp": "20:32",
       "brief": "Concevoir une scène de concert 3D avec praticables, écran central, huit projecteurs mobiles et une séquence lumière synchronisée sur une timeline de vingt secondes. Prévoir vues scène, public et dessus.",
       "acceptance": ["huit projecteurs identifiables", "faisceaux et couleurs changent sur la timeline", "trois caméras sélectionnables", "écran central animé", "aucun clipping majeur"],
+      "controls": ["tempo (BPM) de la séquence", "palette de couleurs", "intensité des faisceaux", "fumée on/off"],
       "capture": "video"
     },
     {
@@ -165,6 +188,7 @@
       "video_timestamp": "21:01",
       "brief": "Créer un livre 3D ouvert dont les pages ont une courbure crédible près de la reliure. L'utilisateur tourne une page par glisser ou bouton; la page se déforme, passe le milieu puis se pose sans traverser les autres pages.",
       "acceptance": ["courbure visible près de la reliure", "animation complète de changement de page", "pas d'intersection durable entre pages", "contenu recto-verso orienté correctement", "commande précédent/suivant"],
+      "controls": ["vitesse de tournage de page", "rigidité du papier (courbure)", "nombre de pages", "éclairage"],
       "capture": "video"
     },
     {
@@ -176,6 +200,7 @@
       "video_timestamp": "22:30",
       "brief": "Créer une vue éclatée isométrique d'un petit drone: châssis, batterie, contrôleur, quatre bras, moteurs, hélices et caméra. Espace bascule assemblé/éclaté; chaque pièce conserve son alignement et reçoit un label relié.",
       "acceptance": ["pièces principales toutes présentes", "état initial assemblé", "explosion et retour animés", "labels sans chevauchement critique", "alignement final identique à l'état initial"],
+      "controls": ["distance d'éclatement", "vitesse de l'animation", "rotation automatique de la vue", "affichage des labels"],
       "capture": "video"
     },
     {
@@ -186,6 +211,7 @@
       "provenance": "original",
       "brief": "Générer une piste de montagnes russes fermée avec montée, descente, looping et virage relevé. Un wagon suit la courbe avec une vitesse dérivée de l'altitude, tandis qu'un graphe montre énergie potentielle et cinétique.",
       "acceptance": ["courbe fermée continue", "looping complet et virage relevé", "wagon reste sur la piste", "vitesse cohérente avec l'altitude", "graphe énergétique synchronisé"],
+      "controls": ["hauteur de la montée", "rayon du looping", "friction", "vitesse initiale du wagon", "caméra embarquée ou vue extérieure"],
       "capture": "video"
     },
     {
@@ -196,6 +222,7 @@
       "provenance": "original",
       "brief": "Simuler pédagogiquement une lune qui approche une planète, franchit une limite de Roche simplifiée puis se fragmente en anneau. Montrer la distance, les forces de marée relatives et les hypothèses du modèle.",
       "acceptance": ["approche orbitale animée", "seuil de fragmentation visible", "fragments forment un anneau", "distance et force affichées", "hypothèses explicitement indiquées"],
+      "controls": ["densité de la lune", "masse de la planète", "distance initiale", "vitesse orbitale", "nombre de fragments"],
       "capture": "video"
     },
     {
@@ -206,6 +233,7 @@
       "provenance": "original",
       "brief": "Modéliser un mécanisme horloger pédagogique centré sur un tourbillon: cage, balancier, échappement et train d'engrenages simplifié. Les rapports de rotation doivent rester cohérents et chaque sous-système peut être isolé.",
       "acceptance": ["cage, balancier, échappement et engrenages visibles", "rotations hiérarchiques cohérentes", "mode ralenti", "isolation de chaque sous-système", "labels lisibles"],
+      "controls": ["facteur de ralenti", "fréquence du balancier", "transparence de la cage", "sous-système isolé"],
       "capture": "video"
     },
     {
@@ -227,6 +255,7 @@
       "provenance": "original",
       "brief": "Simuler en 2D un récipient qui verse un fluide particulaire dans deux obstacles puis un bécher gradué. L'utilisateur contrôle l'inclinaison et la gravité; le volume final estimé doit être affiché.",
       "acceptance": ["particules restent contenues par les obstacles", "inclinaison contrôle le débit", "gravité réglable", "volume final estimé", "reset sans particules fantômes"],
+      "controls": ["viscosité", "nombre de particules", "taille des obstacles"],
       "capture": "video"
     },
     {
@@ -259,6 +288,7 @@
       "video_timestamp": "22:51",
       "brief": "Visualiser les entiers sur une spirale carrée d'Ulam et distinguer les nombres premiers. Permettre le zoom jusqu'à 100000, afficher le nombre sous le curseur et comparer avec une spirale aléatoire de même densité.",
       "acceptance": ["placement des entiers en spirale correct", "test de primalité exact jusqu'à 100000", "hover affiche nombre et coordonnées", "zoom/pan fluides", "comparaison aléatoire disponible"],
+      "controls": ["nombre maximal affiché", "taille des points", "mise en évidence des diagonales"],
       "capture": "screenshot"
     },
     {
@@ -269,6 +299,7 @@
       "provenance": "original",
       "brief": "Créer un banc d'optique 2D où l'utilisateur place source, miroir, lentille convergente et prisme. Tracer les rayons, normales, intersections et foyers, avec une vue numérique des angles et distances.",
       "acceptance": ["réflexion respecte angle incident/réfléchi", "lentille converge vers le foyer", "prisme dévie et sépare trois couleurs", "objets déplaçables", "mesures mises à jour en direct"],
+      "controls": ["indice de réfraction du prisme", "focale de la lentille", "nombre de rayons émis", "couleur ou lumière blanche de la source"],
       "capture": "screenshot"
     },
     {
@@ -299,6 +330,7 @@
       "provenance": "original",
       "brief": "Générer un labyrinthe reproductible puis visualiser BFS, Dijkstra et A* sur exactement la même grille. Afficher cellules explorées, frontière, chemin final et nombre d'opérations; autoriser des poids de terrain.",
       "acceptance": ["labyrinthe connecté", "trois algorithmes sélectionnables", "A* et Dijkstra donnent un coût optimal", "compteurs d'opérations", "seed et poids modifiables"],
+      "controls": ["vitesse de l'animation", "taille de la grille", "densité des murs"],
       "capture": "video"
     },
     {
@@ -411,6 +443,7 @@
       "provenance": "original",
       "brief": "Créer un platformer 2D sur un seul écran avec déplacement, saut à hauteur variable, coyote time, trois dangers, cinq collectibles et une sortie. Ajouter timer, restart instantané et mode debug des collisions.",
       "acceptance": ["contrôles précis et saut variable", "coyote time mesurable", "collisions stables", "cinq collectibles nécessaires", "restart et debug"],
+      "controls": ["gravité", "vitesse de course", "hauteur de saut", "durée du coyote time"],
       "capture": "video"
     },
     {
@@ -421,6 +454,7 @@
       "provenance": "original",
       "brief": "Créer un tower defense 2D avec chemin visible, trois tours aux rôles distincts, quatre vagues, économie simple et pause. Les ennemis recalculent leur chemin si une construction autorisée modifie le terrain sans jamais être bloqués totalement.",
       "acceptance": ["quatre vagues progressives", "trois tours fonctionnellement différentes", "économie achat/amélioration", "chemin toujours valide", "pause et vitesse x2"],
+      "controls": ["vitesse du jeu", "argent de départ", "difficulté des vagues"],
       "capture": "video"
     },
     {
@@ -431,6 +465,7 @@
       "provenance": "original",
       "brief": "Générer un donjon 2D par seed avec salles reliées, point de départ, sortie, clés et portes. Fournir vue joueur avec fog of war et vue debug montrant le graphe des salles et la garantie d'un chemin solvable.",
       "acceptance": ["même seed produit le même donjon", "toutes les salles utiles sont connectées", "sortie nécessite au moins une clé", "fog of war", "vue debug prouve un chemin solvable"],
+      "controls": ["seed", "nombre de salles", "rayon du fog of war"],
       "capture": "video"
     },
     {

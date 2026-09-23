@@ -31,12 +31,17 @@ def select_benchmarks(data: dict, category: str | None, ids: str | None) -> list
     return benches
 
 
-def render_prompt(bench: dict, contract: dict, model: str) -> str:
+def render_prompt(bench: dict, contract: dict) -> str:
     criteria = "\n".join(f"- [ ] {item}" for item in bench["acceptance"])
     deliverables = "\n".join(f"- {item}" for item in contract["deliverables"])
+    launch = "\n".join(f"- {item}" for item in contract["launch"])
+    controls = ""
+    if bench.get("controls"):
+        settings = "\n".join(f"- {item}" for item in bench["controls"])
+        rules = "\n".join(f"- {item}" for item in contract["controls"])
+        controls = f"## Pilotage\n\nRéglages à exposer pour une démonstration en direct :\n\n{settings}\n\n{rules}\n\n"
     return f"""# {bench['title']}
 
-Model route: `{model}`
 Benchmark ID: `{bench['id']}`
 Difficulty: `{bench['difficulty']}`
 
@@ -55,7 +60,11 @@ Difficulty: `{bench['difficulty']}`
 
 {deliverables}
 
-## Critères d'acceptation
+## Contrat de lancement
+
+{launch}
+
+{controls}## Critères d'acceptation
 
 {criteria}
 
@@ -89,7 +98,7 @@ def prepare(output: Path, model: str, benches: list[dict], data: dict, force: bo
         workspace = output / bench["id"]
         workspace.mkdir()
         (workspace / "PROMPT.md").write_text(
-            render_prompt(bench, data["common_contract"], model), encoding="utf-8"
+            render_prompt(bench, data["common_contract"]), encoding="utf-8"
         )
         metadata = {
             **bench,
