@@ -1,0 +1,477 @@
+{
+  "schema_version": 1,
+  "suite": "model-bench-core-40",
+  "status": "draft",
+  "language": "fr",
+  "source_video": {
+    "url": "https://youtu.be/kiZLPw8EbUw",
+    "title": "J'ai TORTURÉ Opus 5.5 avec +1000 tests (verdict)",
+    "channel": "Meydeey | AI Automation",
+    "duration": "28:27",
+    "note": "Les prompts exacts ne sont pas publiés dans la description. Les briefs marqués video-reconstructed sont des reconstructions originales à partir des chapitres et démonstrations visibles, pas des transcriptions mot pour mot."
+  },
+  "references": [
+    {
+      "url": "https://github.com/jdmnk/design-benchmark",
+      "usage": "architecture de rendu, captures, grilles comparatives et déterminisme",
+      "prompt_reuse": false,
+      "license_status": "aucune licence détectée le 2026-09-23"
+    },
+    {
+      "url": "https://github.com/karminski/awesome-llm-benchmark-prompts",
+      "usage": "repérage de familles de tests visuels complexes",
+      "prompt_reuse": false,
+      "license_status": "CC-BY-NC-SA-4.0; aucun prompt copié car la chaîne YouTube de Mike est commerciale"
+    },
+    {
+      "url": "https://github.com/zai-org/Vision2Web",
+      "usage": "séparation fidélité visuelle / correction fonctionnelle",
+      "prompt_reuse": false,
+      "license_status": "CC-BY-NC-SA-4.0; dataset non intégré"
+    },
+    {
+      "url": "https://github.com/s-macke/coding-agent-benchmark",
+      "usage": "tâches récurrentes, critères observables et validation manuelle",
+      "prompt_reuse": false,
+      "license_status": "aucune licence détectée le 2026-09-23"
+    },
+    {
+      "url": "https://github.com/alton47/threejs-skills",
+      "usage": "référence technique Three.js pour les futurs runners",
+      "prompt_reuse": false,
+      "license_status": "MIT"
+    }
+  ],
+  "common_contract": {
+    "fresh_context": true,
+    "network": "disabled-during-render",
+    "deliverables": ["README.md", "code source exécutable", "instructions de lancement", "tests ou auto-checks pertinents"],
+    "visual_viewports": ["1440x900", "390x844"],
+    "motion_capture_seconds": 5,
+    "required_metrics": ["statut", "durée", "tokens entrée", "tokens sortie", "coût", "erreurs console", "résultat des checks"],
+    "scoring": {
+      "delivery_gate": "0 ou 1: le projet démarre et produit un rendu exploitable",
+      "functional": "0-40: critères déterministes et interactions",
+      "visual": "0-40: composition, lisibilité, cohérence, finition",
+      "engineering": "0-20: structure, performance, robustesse, accessibilité"
+    }
+  },
+  "benchmarks": [
+    {
+      "id": "3d-01-rubiks-reversible",
+      "title": "Rubik 5x5 réversible",
+      "category": "3d",
+      "difficulty": "advanced",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "08:40",
+      "brief": "Créer une scène Three.js montrant un Rubik's Cube 5x5 initialement résolu. Deux commandes doivent mélanger le cube avec 25 mouvements valides puis rejouer exactement les inverses pour revenir à l'état initial. Les faces internes restent sombres et seules les faces externes portent les six couleurs.",
+      "acceptance": ["125 cubies présents et géométriquement alignés", "mélange animé avec historique de 25 mouvements", "résolution par inversion exacte de l'historique", "retour final aux six faces uniformes", "orbit, zoom et reset fonctionnent"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-02-crate-stack-physics",
+      "title": "Pile de caisses physique",
+      "category": "3d",
+      "difficulty": "intermediate",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "09:07",
+      "brief": "Construire une simulation 3D d'une tour de 24 caisses soumise à la gravité. L'utilisateur peut retirer une caisse, appliquer une impulsion latérale et réinitialiser la scène. Les collisions doivent être crédibles et les caisses ne doivent pas traverser le sol.",
+      "acceptance": ["24 caisses visibles au démarrage", "retrait d'une caisse par clic", "effondrement influencé par la gravité et les collisions", "aucune caisse ne traverse le sol", "reset déterministe"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-03-hollow-mask-illusion",
+      "title": "Illusion du masque creux",
+      "category": "3d",
+      "difficulty": "advanced",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "11:28",
+      "brief": "Créer une démonstration interactive de l'illusion du masque creux. Une tête concave tourne lentement avec un éclairage contrôlé, un bouton alterne vue concave et convexe, et des repères expliquent le changement de perception sans masquer l'objet.",
+      "acceptance": ["géométrie concave lisible", "rotation automatique stable", "toggle concave/convexe", "éclairage réglable", "labels explicatifs lisibles"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-04-comic-storyboard",
+      "title": "Storyboard BD en 3D",
+      "category": "3d",
+      "difficulty": "advanced",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "14:08",
+      "brief": "Mettre en scène une courte histoire en quatre plans 3D avec deux personnages stylisés. Chaque plan doit changer cadrage, focale, position des personnages et lumière, avec une timeline permettant de lire la séquence comme une BD animée.",
+      "acceptance": ["quatre plans distincts", "continuité spatiale des personnages", "cadrages réellement différents", "timeline et navigation plan par plan", "aucun élément important hors cadre"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-05-seasons-orrery",
+      "title": "Saisons d'une planète",
+      "category": "3d",
+      "difficulty": "intermediate",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "14:31",
+      "brief": "Créer un orrery interactif expliquant les saisons. La planète orbite autour d'une étoile avec un axe incliné constant dans l'espace. Afficher solstices, équinoxes, durée du jour et hémisphère actuellement le plus exposé.",
+      "acceptance": ["axe incliné conserve son orientation", "orbite complète animée", "quatre jalons saisonniers corrects", "durée du jour évolue de façon cohérente", "pause et scrub temporel"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-06-black-hole-lensing",
+      "title": "Trou noir et disque d'accrétion",
+      "category": "3d",
+      "difficulty": "advanced",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "14:58",
+      "brief": "Rendre un trou noir centré avec horizon parfaitement sombre, disque d'accrétion presque vu par la tranche, arcs de lentillage au-dessus et au-dessous, anneau photonique et structure lumineuse en rotation. La caméra reste fixe pendant la capture.",
+      "acceptance": ["horizon noir clairement délimité", "disque horizontal presque edge-on", "arcs de lentillage supérieurs et inférieurs", "rotation visible en cinq secondes", "fond étoilé sans artefact plein écran"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-07-emotion-faces",
+      "title": "Visages et émotions",
+      "category": "3d",
+      "difficulty": "intermediate",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "15:18",
+      "brief": "Créer six visages 3D stylisés partageant la même topologie et exprimant joie, peur, colère, tristesse, surprise et dégoût. Un sélecteur anime la transition entre les expressions et affiche les zones du visage qui changent.",
+      "acceptance": ["six émotions sélectionnables", "identité du visage préservée", "transitions continues sans saut de maillage", "sourcils, yeux et bouche participent", "légende des zones modifiées"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-08-particle-galaxy",
+      "title": "Galaxie de particules",
+      "category": "3d",
+      "difficulty": "intermediate",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "19:24",
+      "brief": "Créer une galaxie spirale procédurale de plusieurs milliers de particules avec bulbe central, bras asymétriques, gradient de couleur et rotation différentielle. Ajouter des contrôles de densité, dispersion et vitesse.",
+      "acceptance": ["au moins 5000 particules", "deux bras spiraux lisibles", "rotation différentielle visible", "contrôles modifient la scène sans rechargement", "60 secondes sans fuite mémoire manifeste"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-09-stage-show",
+      "title": "Scène de spectacle",
+      "category": "3d",
+      "difficulty": "advanced",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "20:32",
+      "brief": "Concevoir une scène de concert 3D avec praticables, écran central, huit projecteurs mobiles et une séquence lumière synchronisée sur une timeline de vingt secondes. Prévoir vues scène, public et dessus.",
+      "acceptance": ["huit projecteurs identifiables", "faisceaux et couleurs changent sur la timeline", "trois caméras sélectionnables", "écran central animé", "aucun clipping majeur"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-10-curved-book",
+      "title": "Livre aux pages courbées",
+      "category": "3d",
+      "difficulty": "advanced",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "21:01",
+      "brief": "Créer un livre 3D ouvert dont les pages ont une courbure crédible près de la reliure. L'utilisateur tourne une page par glisser ou bouton; la page se déforme, passe le milieu puis se pose sans traverser les autres pages.",
+      "acceptance": ["courbure visible près de la reliure", "animation complète de changement de page", "pas d'intersection durable entre pages", "contenu recto-verso orienté correctement", "commande précédent/suivant"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-11-exploded-drone",
+      "title": "Vue éclatée d'un drone",
+      "category": "3d",
+      "difficulty": "advanced",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "22:30",
+      "brief": "Créer une vue éclatée isométrique d'un petit drone: châssis, batterie, contrôleur, quatre bras, moteurs, hélices et caméra. Espace bascule assemblé/éclaté; chaque pièce conserve son alignement et reçoit un label relié.",
+      "acceptance": ["pièces principales toutes présentes", "état initial assemblé", "explosion et retour animés", "labels sans chevauchement critique", "alignement final identique à l'état initial"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-12-rollercoaster-loop",
+      "title": "Montagnes russes procédurales",
+      "category": "3d",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Générer une piste de montagnes russes fermée avec montée, descente, looping et virage relevé. Un wagon suit la courbe avec une vitesse dérivée de l'altitude, tandis qu'un graphe montre énergie potentielle et cinétique.",
+      "acceptance": ["courbe fermée continue", "looping complet et virage relevé", "wagon reste sur la piste", "vitesse cohérente avec l'altitude", "graphe énergétique synchronisé"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-13-roche-limit",
+      "title": "Limite de Roche",
+      "category": "3d",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Simuler pédagogiquement une lune qui approche une planète, franchit une limite de Roche simplifiée puis se fragmente en anneau. Montrer la distance, les forces de marée relatives et les hypothèses du modèle.",
+      "acceptance": ["approche orbitale animée", "seuil de fragmentation visible", "fragments forment un anneau", "distance et force affichées", "hypothèses explicitement indiquées"],
+      "capture": "video"
+    },
+    {
+      "id": "3d-14-tourbillon-watch",
+      "title": "Mécanisme de tourbillon",
+      "category": "3d",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Modéliser un mécanisme horloger pédagogique centré sur un tourbillon: cage, balancier, échappement et train d'engrenages simplifié. Les rapports de rotation doivent rester cohérents et chaque sous-système peut être isolé.",
+      "acceptance": ["cage, balancier, échappement et engrenages visibles", "rotations hiérarchiques cohérentes", "mode ralenti", "isolation de chaque sous-système", "labels lisibles"],
+      "capture": "video"
+    },
+    {
+      "id": "sim-01-wildfire-cellular",
+      "title": "Propagation d'un feu de forêt",
+      "category": "simulation-2d",
+      "difficulty": "intermediate",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "19:47",
+      "brief": "Créer une simulation 2D sur grille d'un feu de forêt. Densité, humidité, vent et nombre de départs sont réglables; afficher en direct les surfaces intacte, en feu et brûlée. Une graine fixe doit rendre le run reproductible.",
+      "acceptance": ["propagation dépend du vent", "humidité réduit la propagation", "statistiques mises à jour", "seed fixe reproductible", "pause, pas-à-pas et reset"],
+      "capture": "video"
+    },
+    {
+      "id": "sim-02-fluid-pour",
+      "title": "Écoulement de particules",
+      "category": "simulation-2d",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Simuler en 2D un récipient qui verse un fluide particulaire dans deux obstacles puis un bécher gradué. L'utilisateur contrôle l'inclinaison et la gravité; le volume final estimé doit être affiché.",
+      "acceptance": ["particules restent contenues par les obstacles", "inclinaison contrôle le débit", "gravité réglable", "volume final estimé", "reset sans particules fantômes"],
+      "capture": "video"
+    },
+    {
+      "id": "sim-03-snowflake-growth",
+      "title": "Croissance de flocons",
+      "category": "simulation-2d",
+      "difficulty": "intermediate",
+      "provenance": "original",
+      "brief": "Créer une simulation de croissance cristalline produisant des flocons à symétrie hexagonale. Température, humidité et bruit modifient la morphologie; six presets peuvent être comparés côte à côte avec la même seed.",
+      "acceptance": ["symétrie d'ordre six", "trois paramètres ont un effet visible", "six presets comparables", "seed reproductible", "export PNG"],
+      "capture": "video"
+    },
+    {
+      "id": "sim-04-mandelbrot-explorer",
+      "title": "Explorateur de Mandelbrot",
+      "category": "math-visual",
+      "difficulty": "intermediate",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "23:10",
+      "brief": "Construire un explorateur fluide de l'ensemble de Mandelbrot avec zoom au pointeur, pan, nombre d'itérations réglable, palettes commutables et historique de navigation. Afficher les coordonnées complexes et l'échelle.",
+      "acceptance": ["calcul Mandelbrot correct", "zoom centré sur le pointeur", "pan sans reset", "palette et itérations réglables", "historique précédent/suivant"],
+      "capture": "video"
+    },
+    {
+      "id": "sim-05-ulam-spiral",
+      "title": "Spirale des nombres premiers",
+      "category": "math-visual",
+      "difficulty": "intermediate",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "22:51",
+      "brief": "Visualiser les entiers sur une spirale carrée d'Ulam et distinguer les nombres premiers. Permettre le zoom jusqu'à 100000, afficher le nombre sous le curseur et comparer avec une spirale aléatoire de même densité.",
+      "acceptance": ["placement des entiers en spirale correct", "test de primalité exact jusqu'à 100000", "hover affiche nombre et coordonnées", "zoom/pan fluides", "comparaison aléatoire disponible"],
+      "capture": "screenshot"
+    },
+    {
+      "id": "sim-06-ray-optics",
+      "title": "Banc d'optique 2D",
+      "category": "math-visual",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Créer un banc d'optique 2D où l'utilisateur place source, miroir, lentille convergente et prisme. Tracer les rayons, normales, intersections et foyers, avec une vue numérique des angles et distances.",
+      "acceptance": ["réflexion respecte angle incident/réfléchi", "lentille converge vers le foyer", "prisme dévie et sépare trois couleurs", "objets déplaçables", "mesures mises à jour en direct"],
+      "capture": "screenshot"
+    },
+    {
+      "id": "sim-07-wave-interference",
+      "title": "Interférences d'ondes",
+      "category": "math-visual",
+      "difficulty": "intermediate",
+      "provenance": "original",
+      "brief": "Simuler deux sources d'ondes circulaires avec fréquence, phase et amplitude réglables. Afficher le champ instantané, l'intensité moyenne et les lignes nodales; proposer un mode double fente.",
+      "acceptance": ["superposition constructive et destructive visible", "phase modifie les franges", "lignes nodales cohérentes", "mode double fente", "pause et pas temporel"],
+      "capture": "video"
+    },
+    {
+      "id": "sim-08-boids-ecosystem",
+      "title": "Écosystème de boids",
+      "category": "simulation-2d",
+      "difficulty": "intermediate",
+      "provenance": "original",
+      "brief": "Créer une simulation de boids avec séparation, alignement et cohésion, puis ajouter prédateurs et zones de nourriture. Les poids des règles sont modifiables et un graphe suit la taille des populations.",
+      "acceptance": ["trois règles de flocking distinctes", "prédateurs poursuivent les proies", "nourriture influence les trajectoires", "poids réglables", "graphe population synchronisé"],
+      "capture": "video"
+    },
+    {
+      "id": "sim-09-pathfinding-maze",
+      "title": "Labyrinthe et pathfinding",
+      "category": "algorithm-visual",
+      "difficulty": "intermediate",
+      "provenance": "original",
+      "brief": "Générer un labyrinthe reproductible puis visualiser BFS, Dijkstra et A* sur exactement la même grille. Afficher cellules explorées, frontière, chemin final et nombre d'opérations; autoriser des poids de terrain.",
+      "acceptance": ["labyrinthe connecté", "trois algorithmes sélectionnables", "A* et Dijkstra donnent un coût optimal", "compteurs d'opérations", "seed et poids modifiables"],
+      "capture": "video"
+    },
+    {
+      "id": "web-01-ai-saas-landing",
+      "title": "Landing page SaaS IA",
+      "category": "frontend",
+      "difficulty": "intermediate",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "06:11",
+      "brief": "Créer une landing page responsive pour un SaaS IA fictif qui transforme une user story en plan de tests. Le hero doit expliquer le produit en une phrase, montrer une démo animée, inclure preuve, fonctionnalités, pricing et CTA sans lorem ipsum.",
+      "acceptance": ["proposition de valeur compréhensible sans scroll", "démo animée lisible", "pricing à trois plans", "navigation mobile fonctionnelle", "aucun overflow horizontal aux deux viewports"],
+      "capture": "both"
+    },
+    {
+      "id": "web-02-product-configurator",
+      "title": "Configurateur de produit",
+      "category": "frontend",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Créer un configurateur de casque audio avec choix de couleur, finition, accessoires et gravure. Le visuel, le prix et le récapitulatif changent instantanément; une URL partageable restaure exactement la configuration.",
+      "acceptance": ["toutes les options modifient le visuel", "prix total correct", "résumé cohérent", "URL partageable restaure l'état", "clavier utilisable"],
+      "capture": "both"
+    },
+    {
+      "id": "web-03-analytics-dashboard",
+      "title": "Dashboard analytics",
+      "category": "frontend",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Construire un dashboard de ventes avec filtres de période et canal, KPI, courbe, cohortes, table triable et état de chargement. Utiliser un dataset local cohérent; chaque vue doit refléter les mêmes données filtrées.",
+      "acceptance": ["filtres affectent tous les widgets", "KPI recalculés correctement", "table triable", "états loading/empty/error", "responsive desktop/mobile"],
+      "capture": "both"
+    },
+    {
+      "id": "web-04-pricing-calculator",
+      "title": "Calculateur de pricing",
+      "category": "frontend",
+      "difficulty": "intermediate",
+      "provenance": "original",
+      "brief": "Créer un calculateur de coût API comparant trois modèles fictifs. Entrées: tokens, cache hit, requêtes mensuelles et effort. Afficher coût détaillé, économie, seuil de rentabilité et graphique; les formules doivent être testées.",
+      "acceptance": ["formules centralisées et testées", "tous les inputs recalculent en direct", "coût détaillé entrée/sortie/cache", "seuil de rentabilité", "formatage monétaire correct"],
+      "capture": "both"
+    },
+    {
+      "id": "web-05-kanban-board",
+      "title": "Kanban collaboratif local",
+      "category": "frontend",
+      "difficulty": "intermediate",
+      "provenance": "original",
+      "brief": "Créer un Kanban local avec trois colonnes, ajout/édition de cartes, drag-and-drop clavier et souris, filtres par label et persistance navigateur. Fournir un historique undo/redo de dix actions.",
+      "acceptance": ["CRUD complet des cartes", "drag-and-drop souris", "déplacement clavier accessible", "filtres par label", "persistance et undo/redo"],
+      "capture": "both"
+    },
+    {
+      "id": "web-06-booking-flow",
+      "title": "Parcours de réservation",
+      "category": "frontend",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Créer un parcours de réservation en quatre étapes: prestation, créneau, coordonnées, confirmation. Gérer timezone, créneaux indisponibles, retour arrière sans perte et validation accessible.",
+      "acceptance": ["quatre étapes cohérentes", "créneaux indisponibles bloqués", "timezone visible et modifiable", "état préservé au retour", "erreurs reliées aux champs"],
+      "capture": "both"
+    },
+    {
+      "id": "web-07-docs-search",
+      "title": "Documentation avec recherche",
+      "category": "frontend",
+      "difficulty": "intermediate",
+      "provenance": "original",
+      "brief": "Créer un mini site de documentation contenant douze pages locales, navigation hiérarchique, recherche plein texte, raccourci Cmd/Ctrl-K, surlignage des résultats et ancres de titres partageables.",
+      "acceptance": ["douze pages indexées", "recherche tolère casse et accents", "Cmd/Ctrl-K ouvre la palette", "résultats surlignés", "ancres et historique navigateur fonctionnent"],
+      "capture": "both"
+    },
+    {
+      "id": "web-08-accessible-checkout",
+      "title": "Checkout accessible",
+      "category": "frontend",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Créer un checkout responsive avec panier, adresse, livraison et paiement simulé. Priorité à l'accessibilité: ordre de tabulation, labels, annonces d'erreur, focus après validation et résumé avant confirmation.",
+      "acceptance": ["parcours complet au clavier", "labels et erreurs accessibles", "focus déplacé vers la première erreur", "totaux exacts", "confirmation sans vraie transaction"],
+      "capture": "both"
+    },
+    {
+      "id": "web-09-data-story",
+      "title": "Storytelling de données",
+      "category": "frontend",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Créer une page scrollytelling expliquant cinq ans de consommation électrique à partir d'un dataset local. Chaque section change le graphique, conserve les axes cohérents et met en évidence une conclusion vérifiable dans les données.",
+      "acceptance": ["au moins quatre étapes narratives", "graphique synchronisé au scroll", "axes et unités cohérents", "conclusions calculables depuis le dataset", "fallback sans animation"],
+      "capture": "video"
+    },
+    {
+      "id": "game-01-crossword-seo",
+      "title": "Mots croisés et SEO",
+      "category": "game",
+      "difficulty": "advanced",
+      "provenance": "video-reconstructed",
+      "video_timestamp": "16:46",
+      "brief": "Créer un jeu de mots croisés sur le SEO à partir d'une liste locale de termes et définitions. Générer une grille valide, numéroter les indices, gérer navigation clavier, vérification lettre/mot/grille et sauvegarde de progression.",
+      "acceptance": ["grille générée sans conflit de lettres", "indices horizontaux et verticaux numérotés", "navigation clavier naturelle", "vérification à trois niveaux", "progression persistée"],
+      "capture": "both"
+    },
+    {
+      "id": "game-02-platformer-one-screen",
+      "title": "Platformer sur un écran",
+      "category": "game",
+      "difficulty": "intermediate",
+      "provenance": "original",
+      "brief": "Créer un platformer 2D sur un seul écran avec déplacement, saut à hauteur variable, coyote time, trois dangers, cinq collectibles et une sortie. Ajouter timer, restart instantané et mode debug des collisions.",
+      "acceptance": ["contrôles précis et saut variable", "coyote time mesurable", "collisions stables", "cinq collectibles nécessaires", "restart et debug"],
+      "capture": "video"
+    },
+    {
+      "id": "game-03-tower-defense",
+      "title": "Mini tower defense",
+      "category": "game",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Créer un tower defense 2D avec chemin visible, trois tours aux rôles distincts, quatre vagues, économie simple et pause. Les ennemis recalculent leur chemin si une construction autorisée modifie le terrain sans jamais être bloqués totalement.",
+      "acceptance": ["quatre vagues progressives", "trois tours fonctionnellement différentes", "économie achat/amélioration", "chemin toujours valide", "pause et vitesse x2"],
+      "capture": "video"
+    },
+    {
+      "id": "game-04-procedural-dungeon",
+      "title": "Donjon procédural",
+      "category": "game",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Générer un donjon 2D par seed avec salles reliées, point de départ, sortie, clés et portes. Fournir vue joueur avec fog of war et vue debug montrant le graphe des salles et la garantie d'un chemin solvable.",
+      "acceptance": ["même seed produit le même donjon", "toutes les salles utiles sont connectées", "sortie nécessite au moins une clé", "fog of war", "vue debug prouve un chemin solvable"],
+      "capture": "video"
+    },
+    {
+      "id": "agent-01-task-api",
+      "title": "API de tâches testée",
+      "category": "agentic-code",
+      "difficulty": "intermediate",
+      "provenance": "original",
+      "brief": "Construire une API REST locale de gestion de tâches avec validation, filtres, pagination, stockage SQLite et gestion d'erreurs uniforme. Livrer migrations, tests unitaires et intégration, puis exécuter la suite avant de conclure.",
+      "acceptance": ["CRUD, filtres et pagination fonctionnent", "schéma SQLite versionné", "validation renvoie des erreurs structurées", "tests unitaires et intégration passent", "README permet un démarrage local"],
+      "capture": "none"
+    },
+    {
+      "id": "agent-02-csv-etl",
+      "title": "Pipeline CSV robuste",
+      "category": "agentic-code",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Créer un CLI qui ingère plusieurs CSV de ventes aux schémas légèrement différents, normalise dates/devises, déduplique, met en quarantaine les lignes invalides et produit un rapport agrégé JSON. Inclure fixtures et tests property-based ou équivalents.",
+      "acceptance": ["trois variantes de schéma prises en charge", "déduplication déterministe", "quarantaine avec raisons", "agrégats exacts", "tests sur cas limites passent"],
+      "capture": "none"
+    },
+    {
+      "id": "agent-03-link-checker",
+      "title": "Vérificateur de liens Markdown",
+      "category": "agentic-code",
+      "difficulty": "intermediate",
+      "provenance": "original",
+      "brief": "Créer un CLI qui analyse un arbre Markdown, valide ancres locales, chemins relatifs et liens HTTP via un transport injectable. Il doit gérer concurrence, cache, retries bornés et sortie JSON/JUnit sans dépendre du réseau dans les tests.",
+      "acceptance": ["ancres et chemins locaux validés", "transport HTTP mockable", "concurrence et cache configurables", "retries bornés", "sorties JSON et JUnit testées"],
+      "capture": "none"
+    },
+    {
+      "id": "agent-04-feedback-board",
+      "title": "Feedback board full-stack",
+      "category": "agentic-code",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Construire un mini produit full-stack de feedback: créer une suggestion, voter une fois, filtrer par statut et permettre à un admin simulé de changer le statut. Fournir base locale, API, UI responsive, tests et scénario E2E principal.",
+      "acceptance": ["création et vote persistés", "double vote empêché", "filtre de statut cohérent", "transition admin journalisée", "tests API, UI et E2E passent"],
+      "capture": "both"
+    }
+  ]
+}
