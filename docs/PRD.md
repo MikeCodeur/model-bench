@@ -103,11 +103,13 @@ bench run --model kimi-k2 --run 2026-09-23-a --ids 3d-06   # relance = nouvelle 
 
 Pour chaque test, le runner :
 
-1. crée un workspace vide avec `PROMPT.md` ;
-2. exécute la commande du modèle dans ce workspace, avec un timeout global (30 min par défaut) ;
+1. crée un dossier de travail temporaire et vide, hors du repo et hors des résultats : `$TMPDIR/model-bench/<id-aléatoire>/` ;
+2. exécute la commande du modèle dans ce dossier, avec un timeout global (30 min par défaut) ;
 3. enregistre sortie, durée et code de sortie ;
-4. supprime `node_modules`, `.next`, `dist` et les caches ;
+4. copie le code produit dans les résultats, sans `node_modules`, `.next`, `dist` ni caches, puis supprime le dossier de travail ;
 5. écrit `attempt.json`.
+
+Le modèle ne travaille jamais dans le repo ni dans le dossier de résultats : il n'a sous les yeux ni le catalogue ni les sorties des autres modèles. L'isolation complète viendra avec Docker.
 
 Règles d'équité : même prompt, même timeout, workspace neuf, aucune intervention humaine pendant une tentative.
 
@@ -116,11 +118,18 @@ Règles d'équité : même prompt, même timeout, workspace neuf, aucune interve
 Tout est en JSON, dans un dossier par tentative ; pas de base de données en v1.
 
 ```
-results/<model>/<run>/<test>/attempt-<n>/
-  attempt.json
-  output.log
-  workspace/        # code produit, sans dépendances
+~/model-bench-data/                 # configurable via MODEL_BENCH_DATA
+  <model>/<run>/
+    run.json                        # modèle, commande, tests sélectionnés, totaux
+    <test>/attempt-<n>/
+      PROMPT.md                     # prompt exact envoyé
+      command.txt                   # commande exacte lancée
+      attempt.json
+      output.log
+      workspace/                    # code produit + lockfile, sans dépendances
 ```
+
+Rejouer un projet : `cd workspace && pnpm install && pnpm dev` (ou l'équivalent du projet).
 
 ```json
 {
@@ -136,7 +145,7 @@ results/<model>/<run>/<test>/attempt-<n>/
 - Une valeur inconnue vaut `null`, jamais `0`.
 - Le coût vaut tokens × `price` quand les deux sont connus.
 - Extensible : on ajoute un champ quand on en a besoin ; les lecteurs ignorent les champs qu'ils ne connaissent pas.
-- `results/` reste local et hors Git en v1.
+- Les résultats restent hors du repo et hors Git en v1.
 
 ## Partie 1 — Extensions prévues (hors v1)
 
@@ -148,7 +157,7 @@ Chaque extension ajoute un champ ou une étape, sans refonte.
 | Captures Playwright | screenshots et vidéo de 5 s dans `captures/` | avant la première vidéo |
 | Delivery gate | install, build et démarrage en ok ou ko | idem |
 | Scoring | note manuelle ou juge IA dans `score` | après 2 modèles comparés |
-| Stockage distant | copie de `results/` vers S3 ou R2 | quand le disque local gêne |
+| Stockage distant | copie de `~/model-bench-data/` vers S3 ou R2 | quand le disque local gêne |
 | Index SQLite | base générée depuis les JSON | seulement si la visualisation rame |
 
 ## Partie 2 — Visualiser (plus tard)

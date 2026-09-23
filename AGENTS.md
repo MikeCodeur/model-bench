@@ -1,40 +1,46 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
+Benchmark suite used to test new AI models on visible, runnable projects (3D, frontend, simulations, games, agentic code) for YouTube videos. Product spec: `docs/PRD.md`.
 
-- `benchmarks.json` is the source of truth for the 40 benchmark definitions, shared contract, categories, and required metrics.
-- `scripts/validate-suite.py` validates catalog shape, allowed values, unique IDs, and category counts.
-- `scripts/prepare-run.py` selects benchmarks and creates isolated run workspaces containing `PROMPT.md`, `benchmark.json`, and `run.json`.
-- `tests/test-model-bench.py` contains the standard-library test suite.
-- `skills/model-bench/SKILL.md` documents the intended agent workflow; `docs/PRD.md` records product scope.
+## Structure
 
-Keep generated run directories outside the repository (for example, under `/tmp`) unless fixtures are deliberately being added.
+- `benchmarks.json`: single source of truth. `common_contract` (deliverables, viewports, required metrics, scoring) + the `benchmarks` list. `prepare-run.py` renders each `PROMPT.md` from a benchmark and `common_contract`, so a contract change alters every prompt.
+- `scripts/validate-suite.py`: validates the catalog. It hardcodes the suite shape: exactly 40 benchmarks, `EXPECTED_COUNTS` per category, allowed `difficulty` / `provenance` / `capture` values, at least 3 `acceptance` criteria, `video_timestamp` required for `video-reconstructed`. Adding, removing or recategorizing a benchmark means updating `EXPECTED_COUNTS` and the 40-count test.
+- `scripts/prepare-run.py`: selects benchmarks (`--category`, `--ids`) and writes one workspace per benchmark (`PROMPT.md`, `benchmark.json`) plus `run.json`. Refuses a non-empty output dir without `--force`.
+- `skills/model-bench/SKILL.md`: agent workflow for a run (also exposed to Claude Code via `.claude/skills/`).
 
-## Build, Test, and Development Commands
+## Commands
 
-This project has no build step or third-party runtime dependencies. Use Python 3.10 or newer.
+No build step, no third-party dependencies (Python stdlib only).
 
 ```bash
 python3 scripts/validate-suite.py
-python3 tests/test-model-bench.py
+python3 tests/test-model-bench.py                                              # all tests
+python3 tests/test-model-bench.py ModelBenchTests.test_unknown_id_is_rejected  # one test
 python3 scripts/prepare-run.py --list
-python3 scripts/prepare-run.py --model provider/model --output /tmp/model-bench-run
+python3 scripts/prepare-run.py --model provider/model --ids 3d-06-black-hole-lensing --output /tmp/model-bench-smoke
 ```
 
-Run validation after every catalog edit. The preparation command creates a complete run; add `--category frontend` or `--ids id-one,id-two` for a focused run. It will not replace a non-empty destination unless `--force` is supplied.
+`python3 -m unittest discover` finds nothing: test files are kebab-case, so run the file directly. Scripts are loaded in tests through `importlib` for the same reason.
 
-## Coding Style & Naming Conventions
+Run validation and tests after every catalog edit.
 
-Follow PEP 8 with four-space indentation, type hints for public function signatures, `pathlib.Path` for paths, and standard-library modules when practical. Use `snake_case` for Python functions and variables. Script filenames use kebab-case, while test files follow `test-*.py`. Benchmark IDs must remain stable, unique, lowercase, and category-prefixed, such as `3d-06-black-hole-lensing`.
+## Run outputs
 
-Preserve UTF-8 JSON output and trailing newlines. Do not silently rewrite prompts or normalize model identifiers.
+Never write run outputs inside the repository.
 
-## Testing Guidelines
+- Work dir (while a model runs): temporary and empty, `$TMPDIR/model-bench/<random-id>/`, deleted afterwards. The model never runs inside the repo or the results dir, so it cannot read the catalog or other models' outputs.
+- Results: `~/model-bench-data/<model>/<run>/<test>/attempt-<n>/` (overridable with `MODEL_BENCH_DATA`), containing `PROMPT.md`, `command.txt`, `attempt.json`, `output.log` and `workspace/` (source + lockfile, without `node_modules`, `.next`, `dist` or caches).
+- A retry creates `attempt-<n+1>`; never overwrite an attempt.
 
-Tests use `unittest`. Add focused tests for validation rules, selection errors, and generated workspace contents. Use temporary directories for filesystem tests and avoid network access. No coverage threshold is configured; changes should cover both the successful path and relevant rejection cases.
+## Target runner (not implemented yet)
 
-## Commit & Pull Request Guidelines
+See `docs/PRD.md`. The runner is model-agnostic: each model is an entry in `models.json` with a shell `command` containing `{prompt}` and an optional `price`. No provider-specific code in the core. Storage is JSON only; unknown metrics are `null`, never `0`. Keep v1 minimal: captures, delivery gate, scoring, remote storage and SQLite are later extensions.
 
-Recent history uses Conventional Commit-style subjects, notably `feat: ...`. Continue with concise imperative subjects such as `fix: reject duplicate benchmark ids` or `docs: clarify run protocol`.
+## Conventions
 
-Pull requests should explain the motivation, list affected benchmark IDs or scripts, and include the validation and test commands run. Link relevant issues. For changes that alter generated prompts or reports, include a small representative before/after excerpt; screenshots are only needed for visual output changes.
+- Benchmark IDs are stable, unique, lowercase and category-prefixed (`3d-06-black-hole-lensing`).
+- Never rewrite prompts per model or normalize model identifiers.
+- JSON output in UTF-8 with a trailing newline.
+- Script files kebab-case, tests `test-*.py`, Python code `snake_case` with `pathlib`.
+- Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
