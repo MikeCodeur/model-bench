@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildJournal, getJournalService, listCodeFilesService } from "@/services/attempt-service";
-import { bestAttempt, checksOf, displayState } from "@/services/attempt-state";
+import { buildJournal, getJournalService, listCodeFilesService, parseAgentLog } from "@/services/attempt-service";
+import { bestAttempt, checksOf, displayState, scoreOf } from "@/services/attempt-state";
+import { NotFoundError, ValidationError } from "@/services/errors/service-errors";
+import { rateAttemptService } from "@/services/rating-service";
 import { compareService } from "@/services/compare-service";
 import { estimateLaunchService } from "@/services/estimate-service";
 import { homeService } from "@/services/home-service";
@@ -11,7 +13,7 @@ const attempt = (patch: Partial<Attempt>): Attempt => ({
   model: "m", run: "2026-09-23-a", test: "t", number: 1, kind: "fresh", basedOn: null, status: "ok", startedAt: null,
   durationS: 600, modelId: null, cliVersion: null, suiteCommit: null, start: "ok", selfTests: "pass",
   tokens: { input: null, output: null, cacheRead: null, cacheWrite: null }, costUsd: 1, billing: null, stack: null,
-  score: null, notes: "", hasCapture: false, ...patch,
+  score: null, rating: null, notes: "", hasCapture: false, ...patch,
 });
 
 describe("attempt-state", () => {
@@ -40,6 +42,31 @@ describe("attempt-state", () => {
   });
 });
 
+describe("rating", () => {
+  it("scores a rated result from its stars, an unrated one from its checks", () => {
+    expect(scoreOf(attempt({ rating: 1 }))).toBe(20);
+    expect(scoreOf(attempt({ rating: 5 }))).toBe(100);
+    expect(scoreOf(attempt({}))).toBe(60);
+    expect(scoreOf(attempt({ status: "error", start: null, selfTests: null }))).toBe(0);
+    expect(scoreOf(attempt({ status: "running" }))).toBeNull();
+  });
+
+  it("lets a bad note push a delivered result below an unrated one", () => {
+    const rejected = attempt({ number: 1, rating: 1, durationS: 60 });
+    const unrated = attempt({ number: 2, durationS: 900 });
+    const loved = attempt({ number: 3, rating: 5, durationS: 1200 });
+    expect(bestAttempt([rejected, unrated])?.number).toBe(2);
+    expect(bestAttempt([rejected, unrated, loved])?.number).toBe(3);
+  });
+
+  it("only accepts 1 to 5 stars or no note", async () => {
+    const ref = { model: "opus-5-5", run: "2026-09-23-a", test: "web-01-ai-saas-landing", number: 1 };
+    await expect(rateAttemptService({ ...ref, rating: 6 })).rejects.toBeInstanceOf(ValidationError);
+    await expect(rateAttemptService({ ...ref, rating: 0 })).rejects.toBeInstanceOf(ValidationError);
+    await expect(rateAttemptService({ ...ref, number: 9, rating: 3 })).rejects.toBeInstanceOf(NotFoundError);
+  });
+});
+
 describe("journal", () => {
   it("titles tool calls with what the agent said and times them", async () => {
     const journal = await getJournalService({ model: "opus-5-5", run: "2026-09-23-a", test: "3d-06-black-hole-lensing", number: 1 });
@@ -53,6 +80,25 @@ describe("journal", () => {
   it("ends with an error entry when the attempt failed", () => {
     const entries = buildJournal([{ kind: "result", text: "boom", costUsd: null, durationMs: 1000 }], "error");
     expect(entries).toEqual([{ elapsedS: 1, kind: "ERR", title: "Échec", detail: "boom" }]);
+  });
+
+  it("reads a codex exec --json transcript", () => {
+    const log = [
+      { type: "thread.started", thread_id: "t" },
+      { type: "item.completed", item: { type: "agent_message", text: "Je crée la scène." } },
+      { type: "item.completed", item: { type: "command_execution", command: "/bin/zsh -lc 'pnpm test'", exit_code: 0 } },
+      { type: "item.completed", item: { type: "file_change", changes: [{ path: "src/main.js", kind: "add" }] } },
+      { type: "item.completed", item: { type: "agent_message", text: "Terminé." } },
+      { type: "turn.completed", usage: { input_tokens: 10, output_tokens: 2 } },
+    ]
+      .map((event) => JSON.stringify(event))
+      .join("\n");
+    const entries = buildJournal(parseAgentLog(log), "ok");
+    expect(entries.map((entry) => [entry.kind, entry.title, entry.detail])).toEqual([
+      ["TEST", "Je crée la scène.", "pnpm test"],
+      ["EDIT", "Écriture", "src/main.js"],
+      ["DONE", "Livraison", "Terminé."],
+    ]);
   });
 
   it("shows journal commands relative to the workspace and spots test runs", () => {

@@ -1,5 +1,5 @@
 import { getModelsDao } from "@/db/repositories/model-repository";
-import { bestAttempt, checksOf, checksPercent } from "@/services/attempt-state";
+import { bestAttempt, checksOf, checksPercent, scoreOf } from "@/services/attempt-state";
 import { groupOf, listBenchmarksService } from "@/services/benchmark-service";
 import { listRunDetailsService } from "@/services/run-service";
 import type { Attempt } from "@/services/types/domain/attempt-types";
@@ -43,14 +43,21 @@ export type ModelView = Model & { tool: string; initials: string };
 export type LeaderboardRow = ModelView & {
   runs: number;
   latestRun: { model: string; run: string } | null;
+  /** Raw `--version` output of the harness on the latest run. */
+  cliVersion: string | null;
   benchmarks: number;
   checksPct: number;
+  /** Mean score out of 100 of the model's best attempts (see `scoreOf`). */
+  score: number;
+  /** Mean human note of those attempts, null when none is rated. */
+  rating: number | null;
+  rated: number;
   deliveredPct: number;
   costPerProjectUsd: number | null;
   avgDurationS: number | null;
 };
 
-export type LeaderboardSort = "checks" | "price" | "speed";
+export type LeaderboardSort = "score" | "price" | "speed";
 
 export async function listModelsService(): Promise<ModelView[]> {
   return (await getModelsDao()).map((model) => ({ ...model, tool: toolOf(model.command), initials: initialsOf(model) }));
@@ -76,20 +83,24 @@ export async function leaderboardService(input: { group?: BenchmarkGroup; sort?:
       ...model,
       runs: own.length,
       latestRun: own[0] ? { model: own[0].model, run: own[0].run } : null,
+      cliVersion: own[0]?.cliVersion ?? null,
       benchmarks: best.length,
       checksPct: Math.round(average(best.map((attempt) => checksPercent(checksOf(attempt)))) ?? 0),
+      score: Math.round(average(best.map((attempt) => scoreOf(attempt) ?? 0)) ?? 0),
+      rating: average(best.flatMap((attempt) => (attempt.rating === null ? [] : [attempt.rating]))),
+      rated: best.filter((attempt) => attempt.rating !== null).length,
       deliveredPct: best.length ? Math.round((best.filter((attempt) => attempt.status === "ok").length / best.length) * 100) : 0,
       costPerProjectUsd: average(best.flatMap((attempt) => (attempt.costUsd === null ? [] : [attempt.costUsd]))),
       avgDurationS: average(best.flatMap((attempt) => (attempt.durationS === null ? [] : [attempt.durationS]))),
     };
   });
-  const sort = input.sort ?? "checks";
+  const sort = input.sort ?? "score";
   const withData = (row: LeaderboardRow) => (row.benchmarks ? 0 : 1);
   return rows.sort(
     (a, b) =>
       withData(a) - withData(b) ||
-      (sort === "checks"
-        ? b.checksPct - a.checksPct || (a.costPerProjectUsd ?? Infinity) - (b.costPerProjectUsd ?? Infinity)
+      (sort === "score"
+        ? b.score - a.score || (a.costPerProjectUsd ?? Infinity) - (b.costPerProjectUsd ?? Infinity)
         : sort === "price"
           ? (a.costPerProjectUsd ?? Infinity) - (b.costPerProjectUsd ?? Infinity)
           : (a.avgDurationS ?? Infinity) - (b.avgDurationS ?? Infinity)),

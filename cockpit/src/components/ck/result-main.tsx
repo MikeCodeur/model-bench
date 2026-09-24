@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { startDemoAction } from "@/app/runs/demo-actions";
 import { iterateAction } from "@/app/runs/actions";
 import type { AttemptRef, Checks, DisplayState } from "@/services/types/domain/attempt-types";
+import { Stars } from "./stars";
 import { ST } from "./status";
 import { css, sx } from "./style";
 import { useToast } from "./toast";
@@ -20,6 +21,7 @@ const SUGGEST = ["ajoute un panneau de réglages", "optimise les fps", "rends-le
 /** Demo stage (the attempt served by `bench start` in an iframe, its capture meanwhile) and the aside: checks, metrics, retouch. */
 export function ResultMain({
   attempt,
+  rating,
   state,
   checks,
   capture,
@@ -32,6 +34,7 @@ export function ResultMain({
   canIterate,
 }: {
   attempt: AttemptRef;
+  rating: number | null;
   state: DisplayState;
   checks: Checks | null;
   capture: string | null;
@@ -180,6 +183,10 @@ export function ResultMain({
                 <span style={css("font:600 12px/1 var(--mono);text-align:right")}>{value === null ? "—" : value ? "oui" : "non"}</span>
               </div>
             ))}
+          </div>
+          <div style={css("margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between")}>
+            <span style={css("font:500 12px/1 var(--mono);color:var(--fg-3)")}>ta note</span>
+            <Stars attempt={attempt} value={rating} size={19} disabled={state === "running" || state === "pending"} />
           </div>
         </section>
         <section style={css("border:1px solid var(--border);border-radius:10px;background:var(--surface)")}>

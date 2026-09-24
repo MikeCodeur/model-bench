@@ -14,7 +14,7 @@ export type CompareSlot = {
   checks: Checks | null;
 };
 
-export type CompareRowKey = "checks" | "tests" | "duration" | "cost" | "tokens" | "starts";
+export type CompareRowKey = "rating" | "checks" | "tests" | "duration" | "cost" | "tokens" | "starts";
 
 export type CompareRow = { key: CompareRowKey; cells: { value: number | boolean | null; best: boolean }[] };
 
@@ -37,6 +37,7 @@ export function parseAttemptKey(key: string): AttemptRef {
 /** Higher is better for checks and tests, lower for time, cost and tokens. Best needs at least two values. */
 function rowOf(key: CompareRowKey, slots: CompareSlot[]): CompareRow {
   const values: (number | boolean | null)[] = slots.map(({ attempt, checks }) => {
+    if (key === "rating") return attempt.rating;
     if (key === "checks") return checks ? checksPercent(checks) : null;
     if (key === "tests") return checks?.tests ?? null;
     if (key === "duration") return attempt.durationS;
@@ -48,7 +49,7 @@ function rowOf(key: CompareRowKey, slots: CompareSlot[]): CompareRow {
   const best =
     key === "starts" || key === "tests" || numbers.length < 2
       ? null
-      : key === "checks"
+      : key === "checks" || key === "rating"
         ? Math.max(...numbers)
         : Math.min(...numbers);
   return { key, cells: values.map((value) => ({ value, best: value !== null && value === best })) };
@@ -83,7 +84,7 @@ export async function compareService(input: { test: string; keys?: string[] }): 
   return {
     benchmark,
     slots,
-    rows: (["checks", "tests", "duration", "cost", "tokens", "starts"] as CompareRowKey[]).map((key) => rowOf(key, slots)),
+    rows: (["rating", "checks", "tests", "duration", "cost", "tokens", "starts"] as CompareRowKey[]).map((key) => rowOf(key, slots)),
     presets: { models: modelPreset, versions: versionPreset },
     addable: finished.map(attemptKey).filter((key) => !used.has(key)),
   };

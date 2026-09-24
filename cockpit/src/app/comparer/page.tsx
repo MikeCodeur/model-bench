@@ -4,7 +4,7 @@ import { voteAction } from "@/app/comparer/actions";
 import { ActionButton } from "@/components/ck/action-button";
 import { Crumbs } from "@/components/ck/crumbs";
 import { DemoFrame } from "@/components/ck/demo-frame";
-import { duration, money, tokens } from "@/components/ck/format";
+import { duration, harness, money, tokens } from "@/components/ck/format";
 import { ST, chip } from "@/components/ck/status";
 import { css, sx } from "@/components/ck/style";
 import { captureUrl, compareHref } from "@/components/ck/urls";
@@ -12,6 +12,7 @@ import type { CompareRowKey } from "@/services/compare-service";
 
 const LETTERS = "ABCD";
 const ROW_LABELS: Record<CompareRowKey, string> = {
+  rating: "note",
   checks: "contrôles",
   tests: "tests",
   duration: "durée",
@@ -48,6 +49,7 @@ export default async function ComparerPage({ searchParams }: { searchParams: Pro
   const benchOptions = withResults.map((card) => card.benchmark.id);
   const formatCell = (key: CompareRowKey, value: number | boolean | null, index: number) => {
     if (value === null) return "—";
+    if (key === "rating") return `★ ${value}/5`;
     if (key === "checks") {
       const checks = cmp.slots[index].checks;
       return checks ? `${checks.passed}/${checks.total}` : "—";
@@ -154,7 +156,7 @@ export default async function ComparerPage({ searchParams }: { searchParams: Pro
                       {blind ? `Résultat ${LETTERS[index]}` : `${slot.attempt.model}${versioned ? ` · v${slot.attempt.number}` : ""}`}
                     </div>
                     <div style={css("margin-top:3px;font:400 12px/1.2 var(--mono);color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>
-                      {blind ? "identité masquée" : `${slot.attempt.run} · via ${slot.model?.tool ?? "?"}`}
+                      {blind ? "identité masquée" : `${slot.attempt.run} · via ${harness(slot.model?.tool ?? "?", slot.attempt.cliVersion)}`}
                     </div>
                   </div>
                   {n > 2 ? (

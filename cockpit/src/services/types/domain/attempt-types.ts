@@ -36,6 +36,8 @@ export type Attempt = AttemptRef & {
   billing: string | null;
   stack: string | null;
   score: number | null;
+  /** Human note from 1 to 5 stars, given in the cockpit. */
+  rating: number | null;
   notes: string;
   hasCapture: boolean;
 };

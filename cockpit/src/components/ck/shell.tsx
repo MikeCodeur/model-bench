@@ -8,7 +8,7 @@ import { Pulse } from "./primitives";
 import { css, sx } from "./style";
 import { ToastProvider, useToast } from "./toast";
 
-export type PaletteItem = { group: string; label: string; sub: string; href?: string; action?: "theme" | "stop" | "stopAll" | "stopDemos"; model?: string };
+export type PaletteItem = { group: string; label: string; sub: string; href?: string; action?: "theme" | "stop" | "stopAll" | "stopDemos" | "syncCaptures"; model?: string };
 
 /** What bench has running right now: agent runs and demo servers. */
 export type Running = { runs: number; demos: number };
@@ -128,11 +128,13 @@ function Palette({
   onClose,
   onStop,
   onStopAll,
+  onSyncCaptures,
 }: {
   items: PaletteItem[];
   onClose: () => void;
   onStop: (model: string) => void;
   onStopAll: (kind?: "demo") => void;
+  onSyncCaptures: () => void;
 }) {
   const router = useRouter();
   const { setTheme } = useTheme();
@@ -152,6 +154,7 @@ function Palette({
     else if (item.action === "stop" && item.model) onStop(item.model);
     else if (item.action === "stopAll") onStopAll();
     else if (item.action === "stopDemos") onStopAll("demo");
+    else if (item.action === "syncCaptures") onSyncCaptures();
     else if (item.href) router.push(item.href);
   };
   const rows: ReactNode[] = [];
@@ -209,6 +212,7 @@ export function Shell({
   palette,
   onStop,
   onStopAll,
+  onSyncCaptures,
   children,
 }: {
   live: LivePill;
@@ -216,11 +220,12 @@ export function Shell({
   palette: PaletteItem[];
   onStop: (model: string) => Promise<{ message: string }>;
   onStopAll: StopAll;
+  onSyncCaptures: () => Promise<{ message: string }>;
   children: ReactNode;
 }) {
   return (
     <ToastProvider>
-      <ShellInner live={live} running={running} palette={palette} onStop={onStop} onStopAll={onStopAll}>
+      <ShellInner live={live} running={running} palette={palette} onStop={onStop} onStopAll={onStopAll} onSyncCaptures={onSyncCaptures}>
         {children}
       </ShellInner>
     </ToastProvider>
@@ -233,6 +238,7 @@ function ShellInner({
   palette,
   onStop,
   onStopAll,
+  onSyncCaptures,
   children,
 }: {
   live: LivePill;
@@ -240,6 +246,7 @@ function ShellInner({
   palette: PaletteItem[];
   onStop: (model: string) => Promise<{ message: string }>;
   onStopAll: StopAll;
+  onSyncCaptures: () => Promise<{ message: string }>;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -273,6 +280,10 @@ function ShellInner({
             router.refresh();
           }}
           onStopAll={stopAll}
+          onSyncCaptures={async () => {
+            toast((await onSyncCaptures()).message);
+            router.refresh();
+          }}
         />
       ) : null}
     </>

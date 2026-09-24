@@ -64,6 +64,24 @@ class BenchTests(unittest.TestCase):
         finally:
             proc.kill()
 
+    def test_codex_usage_sums_turns_and_splits_cached_input(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "output.log"
+            turn = {"type": "turn.completed", "usage": {"input_tokens": 32080, "cached_input_tokens": 25088,
+                                                         "cache_write_input_tokens": 0, "output_tokens": 97}}
+            log.write_text("\n".join([json.dumps({"type": "thread.started"}), "Reading additional input from stdin...",
+                                      json.dumps(turn), json.dumps(turn)]))
+            tokens, cost, model_id = bench.parse_usage("codex-json", log)
+            self.assertEqual(tokens, {"input": 13984, "output": 194, "cache_read": 50176, "cache_write": 0})
+            self.assertEqual((cost, model_id), (None, None))
+            log.write_text("")
+            self.assertEqual(bench.parse_usage("codex-json", log)[0]["input"], None)
+
+    def test_model_env_expands_home(self):
+        env = bench.model_env({"env": {"CODEX_HOME": "~/model-bench-data/.harness/codex"}})
+        self.assertEqual(env["CODEX_HOME"], str(Path.home() / "model-bench-data/.harness/codex"))
+        self.assertIn("PATH", env)
+
     def test_stale_registration_is_dropped(self):
         with tempfile.TemporaryDirectory() as tmp:
             os.environ["MODEL_BENCH_DATA"] = tmp

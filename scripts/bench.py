@@ -55,6 +55,11 @@ def data_dir() -> Path:
     return Path(os.environ.get("MODEL_BENCH_DATA", Path.home() / "model-bench-data"))
 
 
+def config_dir() -> Path:
+    """Where models.json and bench.config.json live (overridable for tests with MODEL_BENCH_CONFIG)."""
+    return Path(os.environ.get("MODEL_BENCH_CONFIG", ROOT))
+
+
 def build_args(command: str, prompt: str) -> list[str]:
     return [part.replace("{prompt}", prompt) for part in shlex.split(command)]
 
@@ -236,14 +241,21 @@ def process_alive(pid: int) -> bool:
     return subprocess.run(["ps", "-p", str(pid), "-o", "stat="], capture_output=True, text=True).stdout.strip()[:1] not in ("Z", "")
 
 
-def execute(args: list[str], work: Path, log_path: Path, timeout_s: float, idle_s: float) -> tuple[int | None, str | None, float]:
+def model_env(model: dict) -> dict[str, str]:
+    """The agent's environment: ours plus the model's `env` (paths expanded), e.g. an isolated CODEX_HOME."""
+    return {**os.environ, **{key: os.path.expanduser(str(value)) for key, value in model.get("env", {}).items()}}
+
+
+def execute(args: list[str], work: Path, log_path: Path, timeout_s: float, idle_s: float,
+            env: dict[str, str] | None = None) -> tuple[int | None, str | None, float]:
     """Run the agent with hard and idle timeouts. Returns (exit code, forced status, duration)."""
     started = time.monotonic()
     last_activity = time.time()
     last_size = 0
     forced = None
     with log_path.open("wb") as log:
-        proc = subprocess.Popen(args, cwd=work, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        proc = subprocess.Popen(args, cwd=work, env=env, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT,
+                                start_new_session=True)
         track_group(proc.pid)
         try:
             while proc.poll() is None:
@@ -267,6 +279,8 @@ def execute(args: list[str], work: Path, log_path: Path, timeout_s: float, idle_
 
 def parse_usage(parser: str | None, log_path: Path) -> tuple[dict, float | None, str | None]:
     tokens = {"input": None, "output": None, "cache_read": None, "cache_write": None}
+    if parser == "codex-json":
+        return parse_codex_usage(log_path)
     if parser != "claude-stream-json":
         return tokens, None, None
     cost, model_id = None, None
@@ -287,6 +301,24 @@ def parse_usage(parser: str | None, log_path: Path) -> tuple[dict, float | None,
             }
             cost = event.get("total_cost_usd")
     return tokens, cost, model_id
+
+
+def parse_codex_usage(log_path: Path) -> tuple[dict, float | None, str | None]:
+    """`codex exec --json`: token usage per `turn.completed` (input includes cached tokens), no cost, no model id."""
+    totals = None
+    for line in log_path.read_text(encoding="utf-8", errors="replace").splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if event.get("type") != "turn.completed":
+            continue
+        usage = event.get("usage") or {}
+        cached = usage.get("cached_input_tokens") or 0
+        turn = {"input": (usage.get("input_tokens") or 0) - cached, "output": usage.get("output_tokens") or 0,
+                "cache_read": cached, "cache_write": usage.get("cache_write_input_tokens") or 0}
+        totals = turn if totals is None else {key: totals[key] + turn[key] for key in turn}
+    return totals or {"input": None, "output": None, "cache_read": None, "cache_write": None}, None, None
 
 
 def price_cost(price: dict | None, tokens: dict) -> float | None:
@@ -360,7 +392,8 @@ def run_attempt(bench: dict, number: int, run_dir: Path, run: dict, model: dict,
     log_path = attempt_dir / "output.log"
     started_at = now_iso()
     exit_code, forced, duration = execute(
-        build_args(model["command"], prompt), work, log_path, guards["timeout_min"] * 60, guards["idle_timeout_min"] * 60
+        build_args(model["command"], prompt), work, log_path, guards["timeout_min"] * 60, guards["idle_timeout_min"] * 60,
+        model_env(model),
     )
     leftovers = kill_leftovers(work)
     shutil.copytree(work, attempt_dir / "workspace", ignore=shutil.ignore_patterns(*IGNORED), symlinks=True)
@@ -402,11 +435,11 @@ def run_attempt(bench: dict, number: int, run_dir: Path, run: dict, model: dict,
 
 def cmd_run(args: argparse.Namespace) -> None:
     catalog = preparer.load_catalog()
-    models = load_json(ROOT / "models.json")
+    models = load_json(config_dir() / "models.json")
     if args.model not in models:
         raise SystemExit(f"Unknown model {args.model}. Declared: {', '.join(models)}")
     model = models[args.model]
-    guards = load_json(ROOT / "bench.config.json")
+    guards = load_json(config_dir() / "bench.config.json")
     if args.timeout:
         guards["timeout_min"] = args.timeout
     if args.budget is not None:
@@ -476,6 +509,9 @@ def cmd_run(args: argparse.Namespace) -> None:
                 continue
             base = run_dir / bench["id"] / f"attempt-{previous[-1]}"
         attempt = run_attempt(bench, number, run_dir, run, model, catalog, guards, base, args.delta)
+        attempt_dir = run_dir / bench["id"] / f"attempt-{number}"
+        if guards.get("shots", True) and not args.no_shots and wants_capture(attempt_dir, catalog):
+            print(f"  capture: {'ok' if capture_attempt(attempt_dir) else 'failed'}", flush=True)
         run["attempts"] = collect_attempts(run_dir)
         run["totals"] = {
             "attempts": len(run["attempts"]),
@@ -821,26 +857,47 @@ def capture(url: str, target: Path) -> bool:
     return target.exists()
 
 
+def capture_path(attempt_dir: Path) -> Path:
+    return attempt_dir / "captures" / "screenshot.jpg"
+
+
+def wants_capture(attempt_dir: Path, catalog: dict) -> bool:
+    """Delivered attempts of benchmarks with a UI (`capture` other than `none`)."""
+    attempt = load_json(attempt_dir / "attempt.json")
+    bench = next((b for b in catalog["benchmarks"] if b["id"] == attempt["test"]), None)
+    return attempt["status"] == "ok" and bench is not None and bench.get("capture", "none") != "none"
+
+
+def capture_attempt(attempt_dir: Path) -> bool:
+    """Start the attempt with the launch contract and screenshot it (also records `start` and `stack`)."""
+    if not Path(CHROME).exists():
+        return False
+    app = App(attempt_dir)
+    try:
+        return app.start() and capture(f"http://127.0.0.1:{app.port}/", capture_path(attempt_dir))
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+        return False  # a capture never breaks a run
+    finally:
+        app.stop()
+
+
 def cmd_shots(args: argparse.Namespace) -> None:
-    """Screenshot every finished attempt of a run into attempt-<n>/captures/screenshot.jpg."""
-    parts = args.target.strip("/").split("/")
-    run_dir = data_dir() / parts[0] / parts[1]
-    attempt_dirs = sorted(p.parent for p in run_dir.glob("*/attempt-*/attempt.json"))
+    """Screenshot finished attempts into attempt-<n>/captures/screenshot.jpg: one run, one model, or every missing one."""
+    parts = args.target.strip("/").split("/") if args.target else []
+    pattern = "/".join([*parts[:2], *["*"] * (2 - len(parts[:2]))]) + "/*/attempt-*/attempt.json"
+    attempt_dirs = sorted(p.parent for p in data_dir().glob(pattern) if not p.parts[-5].startswith("."))
     if len(parts) > 2:
         attempt_dirs = [d for d in attempt_dirs if d.parent.name.startswith(parts[2])]
-    if attempt_dirs:
-        register_demo(attempt_dirs)
-    for attempt_dir in attempt_dirs:
-        target = attempt_dir / "captures" / "screenshot.jpg"
-        if target.exists() and not args.force:
-            print(f"skip  {'/'.join(attempt_dir.parts[-2:])}", flush=True)
-            continue
-        app = App(attempt_dir)
-        try:
-            ok = app.start() and capture(f"http://127.0.0.1:{app.port}/", target)
-        finally:
-            app.stop()
-        print(f"{'shot' if ok else 'KO  '}  {'/'.join(attempt_dir.parts[-2:])}", flush=True)
+    catalog = preparer.load_catalog()
+    todo = [d for d in attempt_dirs if wants_capture(d, catalog) and (args.force or not capture_path(d).exists())]
+    if not Path(CHROME).exists():
+        raise SystemExit(f"Chrome not found at {CHROME}")
+    print(f"{len(todo)} capture(s) to take, {len(attempt_dirs) - len(todo)} skipped", flush=True)
+    if todo:
+        register_demo(todo)
+    for attempt_dir in todo:
+        ok = capture_attempt(attempt_dir)
+        print(f"{'shot' if ok else 'KO  '}  {'/'.join(attempt_dir.parts[-4:])}", flush=True)
 
 
 def cmd_stop(args: argparse.Namespace) -> None:
@@ -857,7 +914,11 @@ def cmd_stop(args: argparse.Namespace) -> None:
         return not test or any(t == test or t.startswith(test + "-") or test.startswith(t + "-") for t in entry["tests"])
 
     registered = registered_processes()
-    everything = registered + unregistered_processes({entry["pid"] for entry in registered})
+    everything = registered
+    # Unregistered processes (older bench versions) carry no data dir: only look for them when using the default one,
+    # so a bench pointed at another MODEL_BENCH_DATA (tests) never touches the real processes.
+    if "MODEL_BENCH_DATA" not in os.environ:
+        everything = registered + unregistered_processes({entry["pid"] for entry in registered})
     selected = [entry for entry in everything if matches(entry) and entry["pid"] != os.getpid()]
     public = lambda entry: {key: entry[key] for key in ("pid", "kind", "model", "run", "tests")}
     if args.list and args.json:
@@ -912,6 +973,7 @@ def main() -> None:
     run.add_argument("--iterate", action="store_true", help="Continue from the latest attempt with a delta prompt")
     run.add_argument("--delta", help="Free-text changes to add to the delta prompt (implies --iterate)")
     run.add_argument("--yes", action="store_true", help="Skip confirmation")
+    run.add_argument("--no-shots", action="store_true", help="Do not screenshot delivered attempts")
     run.set_defaults(func=cmd_run)
     open_ = sub.add_parser("open", help="Start a result and open it in the browser")
     open_.add_argument("target", nargs="?", help="<model>/<run>[/<test>[/attempt-<n>]]; omit to list results")
@@ -926,7 +988,7 @@ def main() -> None:
     start.add_argument("--port", type=int)
     start.set_defaults(func=cmd_start)
     shots = sub.add_parser("shots", help="Screenshot the attempts of a run into captures/")
-    shots.add_argument("target", help="<model>/<run>[/<test>]")
+    shots.add_argument("target", nargs="?", help="<model>[/<run>[/<test>]]; omit to sync every missing capture")
     shots.add_argument("--force", action="store_true", help="Replace existing captures")
     shots.set_defaults(func=cmd_shots)
 

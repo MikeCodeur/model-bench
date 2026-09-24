@@ -4,7 +4,7 @@ import { stopRunAction } from "@/app/runs/actions";
 import { ActionButton } from "@/components/ck/action-button";
 import { AutoRefresh, Clock, ElapsedBar } from "@/components/ck/auto-refresh";
 import { Crumbs } from "@/components/ck/crumbs";
-import { day, duration, money, monthLabel, time } from "@/components/ck/format";
+import { day, duration, harness, money, monthLabel, time } from "@/components/ck/format";
 import { Pulse, StatusBadge, thumbBackground } from "@/components/ck/primitives";
 import { SEG, segTitle } from "@/components/ck/status";
 import { css, sx } from "@/components/ck/style";
@@ -50,7 +50,7 @@ export default async function HomePage() {
                   <span style={css("flex:none;font:600 14px/1 var(--sans)")}>{statusTxt}</span>
                   <span style={css("min-width:0;overflow:hidden;text-overflow:ellipsis;font:500 13px/1 var(--mono);color:var(--fg-2)")}>{live.model}</span>
                   <span style={css("min-width:0;flex:0 10 auto;overflow:hidden;text-overflow:ellipsis;font:400 12px/1 var(--mono);color:var(--fg-3)")}>
-                    via {toolOf(live.model)} · {day(live.createdAt)} {time(live.createdAt)}
+                    via {harness(toolOf(live.model), live.cliVersion)} · {day(live.createdAt)} {time(live.createdAt)}
                   </span>
                   <div style={css("margin-left:auto;flex:none;display:flex;gap:6px")}>
                     {live.live ? (
@@ -184,10 +184,10 @@ export default async function HomePage() {
                 <span style={css("min-width:0")}>
                   <span style={css("display:block;font:500 13px/1.25 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{row.id}</span>
                   <span style={css("display:block;margin-top:6px;height:3px;border-radius:2px;background:var(--surface-2);overflow:hidden")}>
-                    <span style={css(`display:block;height:100%;width:${row.checksPct}%;background:${index === 0 ? "var(--accent)" : "var(--fg-3)"}`)} />
+                    <span style={css(`display:block;height:100%;width:${row.score}%;background:${index === 0 ? "var(--accent)" : "var(--fg-3)"}`)} />
                   </span>
                 </span>
-                <span style={css("font:600 15px/1 var(--mono);text-align:right")}>{row.benchmarks ? row.checksPct : "—"}</span>
+                <span style={css("font:600 15px/1 var(--mono);text-align:right")}>{row.benchmarks ? row.score : "—"}</span>
                 <span style={css("font:400 12px/1 var(--mono);color:var(--fg-2);text-align:right")}>{money(row.costPerProjectUsd)}</span>
               </Link>
             ))}

@@ -9,12 +9,14 @@ import type { BenchProcess, BenchProcessKind } from "@/services/types/domain/pro
 export type BenchCommand =
   | { kind: "run"; model: string; runId: string; tests: string[] }
   | { kind: "retry"; model: string; run: string; tests: string[] }
-  | { kind: "iterate"; model: string; run: string; tests: string[]; delta: string };
+  | { kind: "iterate"; model: string; run: string; tests: string[]; delta: string }
+  | { kind: "shots"; model: string; tests: string[] };
 
 const benchScript = () => path.join(env.BENCH_REPO, "scripts", "bench.py");
 
 /** Validated command → argv for `bench`. Never a shell string. */
 export function benchArgs(command: BenchCommand): string[] {
+  if (command.kind === "shots") return ["shots"];
   const args = ["run", "--model", command.model, "--ids", command.tests.join(","), "--yes"];
   if (command.kind === "run") return [...args, "--run-id", command.runId];
   if (command.kind === "retry") return [...args, "--run", command.run];

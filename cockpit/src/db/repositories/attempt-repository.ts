@@ -33,6 +33,7 @@ const storedAttempt = z.object({
   billing: z.string().nullish(),
   stack: z.string().nullish(),
   score: z.number().nullish(),
+  rating: z.number().int().min(1).max(5).nullish(),
   notes: z.string().default(""),
 });
 
@@ -62,6 +63,7 @@ async function readAttempt(ref: AttemptRef): Promise<Attempt> {
       billing: null,
       stack: null,
       score: null,
+      rating: null,
       notes: "",
       hasCapture: false,
     };
@@ -89,9 +91,20 @@ async function readAttempt(ref: AttemptRef): Promise<Attempt> {
     billing: data.billing ?? null,
     stack: data.stack ?? null,
     score: data.score ?? null,
+    rating: data.rating ?? null,
     notes: data.notes,
     hasCapture: await exists(path.join(dir, "captures", "screenshot.jpg")),
   };
+}
+
+/** Write the human note into attempt.json (kept next to what the runner wrote), or remove it with null. */
+export async function rateAttemptDao(ref: AttemptRef, rating: number | null): Promise<boolean> {
+  const file = path.join(attemptDir(ref), "attempt.json");
+  if (!(await exists(file))) return false;
+  const data = (await readJson(file)) as Record<string, unknown>;
+  const next = { ...data, rating, rated_at: rating === null ? null : new Date().toISOString() };
+  await fs.writeFile(file, `${JSON.stringify(next, null, 2)}\n`, "utf8");
+  return true;
 }
 
 export async function listRunAttemptsDao(model: string, run: string): Promise<Attempt[]> {

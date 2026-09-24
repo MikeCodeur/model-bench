@@ -5,8 +5,8 @@ import { Shell, type LivePill, type PaletteItem } from "@/components/ck/shell";
 import { css } from "@/components/ck/style";
 import { money } from "@/components/ck/format";
 import { runHref, resultHref } from "@/components/ck/urls";
-import { benchProcessesDal, benchmarkCardsDal, listModelsDal, runDetailsDal } from "@/app/dal/cockpit-dal";
-import { stopAllAction, stopRunAction } from "@/app/runs/actions";
+import { benchProcessesDal, benchmarkCardsDal, listModelsDal, missingCapturesDal, runDetailsDal } from "@/app/dal/cockpit-dal";
+import { stopAllAction, stopRunAction, syncCapturesAction } from "@/app/runs/actions";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,13 +19,18 @@ async function stop(model: string) {
   return stopRunAction(model);
 }
 
+async function syncCaptures() {
+  "use server";
+  return syncCapturesAction();
+}
+
 async function stopAll(kind?: "run" | "demo") {
   "use server";
   return stopAllAction(kind);
 }
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const [runs, models, cards, processes] = await Promise.all([runDetailsDal(), listModelsDal(), benchmarkCardsDal(), benchProcessesDal()]);
+  const [runs, models, cards, processes, missingCaptures] = await Promise.all([runDetailsDal(), listModelsDal(), benchmarkCardsDal(), benchProcessesDal(), missingCapturesDal()]);
   const running = { runs: processes.filter((item) => item.kind === "run").length, demos: processes.filter((item) => item.kind === "demo").length };
   const liveRun = runs.find((run) => run.live) ?? runs[0] ?? null;
   const live: LivePill = liveRun
@@ -48,6 +53,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           ...(running.demos ? [{ group: "actions", label: "Arrêter les démos", sub: `${running.demos} serveurs`, action: "stopDemos" } as PaletteItem] : []),
         ]
       : []),
+    ...(missingCaptures ? [{ group: "actions", label: "Synchroniser les captures", sub: `${missingCaptures} manquantes`, action: "syncCaptures" } as PaletteItem] : []),
     { group: "actions", label: "Comparer en mode aveugle", sub: "", href: "/comparer?blind=1" },
     { group: "aller à", label: "Accueil", sub: "", href: "/" },
     { group: "aller à", label: "Benchs", sub: "", href: "/benchs" },
@@ -67,7 +73,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="fr" suppressHydrationWarning>
       <body style={css("min-height:100vh;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased")}>
         <AppProviders>
-          <Shell live={live} running={running} palette={palette} onStop={stop} onStopAll={stopAll}>
+          <Shell live={live} running={running} palette={palette} onStop={stop} onStopAll={stopAll} onSyncCaptures={syncCaptures}>
             <div style={css("max-width:1440px;margin:0 auto;padding:16px 28px 64px")}>{children}</div>
           </Shell>
         </AppProviders>

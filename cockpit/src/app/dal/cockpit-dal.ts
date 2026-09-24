@@ -4,7 +4,7 @@ import { listBenchmarkCardsService } from "@/services/benchmark-service";
 import { compareService } from "@/services/compare-service";
 import { estimateTableService } from "@/services/estimate-service";
 import { homeService } from "@/services/home-service";
-import { listActiveJobsService, listBenchProcessesService } from "@/services/job-service";
+import { listActiveJobsService, listBenchProcessesService, missingCapturesService } from "@/services/job-service";
 import { leaderboardService, listModelsService, type LeaderboardSort } from "@/services/model-service";
 import { getRunService, listRunDetailsService } from "@/services/run-service";
 import type { AttemptRef } from "@/services/types/domain/attempt-types";
@@ -27,3 +27,4 @@ export const voteDal = requestDal((test: string, candidates: string[]) => getVot
 export const estimateTableDal = requestDal((models: string[]) => estimateTableService(models));
 export const activeJobsDal = requestDal(listActiveJobsService);
 export const benchProcessesDal = requestDal(listBenchProcessesService);
+export const missingCapturesDal = requestDal(missingCapturesService);

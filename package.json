@@ -1,12 +1,14 @@
 {
   "name": "model-bench",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+    "dev": "pnpm --filter cockpit dev",
+    "build": "pnpm --filter cockpit build",
+    "start": "pnpm --filter cockpit start",
+    "test": "pnpm test:py && pnpm --filter cockpit test",
+    "test:py": "python3 scripts/validate-suite.py > /dev/null && python3 tests/test-model-bench.py && python3 tests/test-bench.py && python3 tests/test-bench-cli.py",
+    "lint": "pnpm --filter cockpit lint",
+    "typecheck": "pnpm --filter cockpit typecheck",
+    "bench": "python3 scripts/bench.py"
+  }
 }

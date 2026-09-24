@@ -35,9 +35,13 @@ function summarizeToolInput(input: unknown): string {
   return JSON.stringify(input ?? "").slice(0, 160);
 }
 
-/** Turn a Claude Code stream-json transcript into readable steps. Unknown lines are skipped. */
+/** `/bin/zsh -lc 'cd x && y'` → `cd x && y`: Codex wraps every command in a login shell. */
+const unwrapShell = (command: string) => command.match(/^\S*\/(?:ba|z)?sh -lc (['"])([\s\S]*)\1$/)?.[2] ?? command;
+
+/** Turn an agent transcript into readable steps: Claude Code stream-json or `codex exec --json`. Unknown lines are skipped. */
 export function parseAgentLog(log: string): LogStep[] {
   const steps: LogStep[] = [];
+  let lastMessage = "";
   for (const line of log.split("\n")) {
     let event: Record<string, unknown>;
     try {
@@ -57,6 +61,22 @@ export function parseAgentLog(log: string): LogStep[] {
         }
       }
     }
+    if (event.type === "item.completed") {
+      const item = (event.item ?? {}) as Record<string, unknown>;
+      if (item.type === "agent_message" && typeof item.text === "string" && item.text.trim()) {
+        lastMessage = item.text.trim();
+        steps.push({ kind: "text", text: lastMessage, at });
+      }
+      if (item.type === "command_execution" && typeof item.command === "string") {
+        steps.push({ kind: "tool", name: "Bash", summary: unwrapShell(item.command).split("\n")[0].slice(0, 160), at });
+      }
+      if (item.type === "file_change" && Array.isArray(item.changes)) {
+        const changes = item.changes as { path?: string; kind?: string }[];
+        const summary = changes.map((change) => change.path ?? "").join(", ").slice(0, 160);
+        steps.push({ kind: "tool", name: changes.every((change) => change.kind === "add") ? "Write" : "Edit", summary, at });
+      }
+    }
+    if (event.type === "turn.completed") steps.push({ kind: "result", text: lastMessage, costUsd: null, durationMs: null });
     if (event.type === "result") {
       steps.push({
         kind: "result",

@@ -5,7 +5,7 @@ import { benchArgs, isProcessAlive, isRunnerAlive, listBenchProcesses, spawnBenc
 import { listBenchmarksService } from "@/services/benchmark-service";
 import { ConflictError, NotFoundError } from "@/services/errors/service-errors";
 import { listModelsService } from "@/services/model-service";
-import { getRunService } from "@/services/run-service";
+import { getRunService, listRunDetailsService } from "@/services/run-service";
 import type { Job, JobKind } from "@/services/types/domain/job-types";
 import type { BenchProcess, BenchProcessKind } from "@/services/types/domain/process-types";
 import { iterateSchema, launchRunSchema, retryTestSchema, runRefInputSchema } from "@/services/validation/job-validation";
@@ -49,7 +49,7 @@ async function waitUntilLive(model: string, run: string, pid: number): Promise<v
   }
 }
 
-async function start(kind: JobKind, command: BenchCommand, run: string): Promise<JobStarted> {
+async function start(kind: JobKind, command: BenchCommand, run: string | null): Promise<JobStarted> {
   const id = randomUUID();
   const args = benchArgs(command);
   const job: Job = {
@@ -64,8 +64,8 @@ async function start(kind: JobKind, command: BenchCommand, run: string): Promise
     stoppedAt: null,
   };
   await saveJobDao(job);
-  await waitUntilLive(command.model, run, job.pid);
-  return { model: command.model, run, job };
+  if (run) await waitUntilLive(command.model, run, job.pid);
+  return { model: command.model, run: run ?? "", job };
 }
 
 /** New run of a model on a selection of benchmarks. */
@@ -114,6 +114,22 @@ export async function stopRunService(input: { model: string }): Promise<void> {
   const model = parseOrThrow(modelIdSchema, input.model);
   await stopBenchProcesses({ model, kind: "run" });
   await closeJobs(model);
+}
+
+/** Delivered attempts of UI benchmarks that have no screenshot yet. */
+export async function missingCapturesService(): Promise<number> {
+  const [runs, benchmarks] = await Promise.all([listRunDetailsService(), listBenchmarksService()]);
+  const withUi = new Set(benchmarks.filter((bench) => bench.capture !== "none").map((bench) => bench.id));
+  return runs
+    .flatMap((run) => run.tests.flatMap((test) => test.attempts))
+    .filter((attempt) => attempt.status === "ok" && !attempt.hasCapture && withUi.has(attempt.test)).length;
+}
+
+/** `bench shots` in the background: screenshot every delivered attempt still missing one. */
+export async function syncCapturesService(): Promise<Job> {
+  const active = await listActiveJobsService();
+  if (active.some((job) => job.kind === "shots")) throw new ConflictError("Les captures sont déjà en cours de synchronisation");
+  return (await start("shots", { kind: "shots", model: "*", tests: [] }, null)).job;
 }
 
 /** Runs and demo servers started by bench, from the cockpit or a terminal. */

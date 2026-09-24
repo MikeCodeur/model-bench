@@ -41,3 +41,9 @@ export const monthLabel = (date: Date) => MONTHS[date.getMonth()];
 export const pct = (value: number) => `${Math.max(0, Math.min(100, value))}%`;
 
 export const difficulty = (value: string) => (value === "advanced" ? "avancé" : value === "intermediate" ? "intermédiaire" : value);
+
+/** Harness with its version, `Codex CLI 0.156.1`, from the raw `--version` output (`codex-cli 0.156.1`, `2.1.280 (Claude Code)`). */
+export function harness(tool: string, cliVersion: string | null): string {
+  const version = cliVersion?.match(/\d+(\.\d+)+/)?.[0];
+  return version ? `${tool} ${version}` : tool;
+}

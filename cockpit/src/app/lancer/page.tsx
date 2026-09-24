@@ -1,6 +1,6 @@
 import { benchmarkCardsDal, estimateTableDal, leaderboardDal, listModelsDal } from "@/app/dal/cockpit-dal";
 import { Crumbs } from "@/components/ck/crumbs";
-import { difficulty, money } from "@/components/ck/format";
+import { difficulty, harness, money } from "@/components/ck/format";
 import { LaunchForm } from "@/components/ck/launch-form";
 import { thumbBackground } from "@/components/ck/primitives";
 import { css } from "@/components/ck/style";
@@ -26,7 +26,7 @@ export default async function LancerPage({ searchParams }: { searchParams: Promi
         <LaunchForm
           models={models.map((model) => {
             const row = board.find((item) => item.id === model.id);
-            return { id: model.id, tool: model.tool, score: row?.benchmarks ? String(row.checksPct) : "—", cost: money(row?.costPerProjectUsd ?? null) };
+            return { id: model.id, tool: harness(model.tool, row?.cliVersion ?? null), score: row?.benchmarks ? String(row.score) : "—", cost: money(row?.costPerProjectUsd ?? null) };
           })}
           groups={BENCHMARK_GROUPS}
           benches={cards.map((card) => ({

@@ -14,5 +14,49 @@
     "version_command": "claude --version",
     "parser": "claude-stream-json",
     "billing": "subscription"
+  },
+  "gpt-6-astra": {
+    "label": "GPT-6-Astra (Codex CLI)",
+    "model_id": "gpt-6-astra",
+    "command": "codex exec -m gpt-6-astra --ignore-user-config --ignore-rules --ephemeral --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox --color never --json {prompt}",
+    "env": {
+      "CODEX_HOME": "~/model-bench-data/.harness/codex"
+    },
+    "version_command": "codex --version",
+    "parser": "codex-json",
+    "billing": "subscription"
+  },
+  "gpt-5-6-sol": {
+    "label": "GPT-5.6-Sol (Codex CLI)",
+    "model_id": "gpt-5.6-sol",
+    "command": "codex exec -m gpt-5.6-sol --ignore-user-config --ignore-rules --ephemeral --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox --color never --json {prompt}",
+    "env": {
+      "CODEX_HOME": "~/model-bench-data/.harness/codex"
+    },
+    "version_command": "codex --version",
+    "parser": "codex-json",
+    "billing": "subscription"
+  },
+  "gpt-5-6-terra": {
+    "label": "GPT-5.6-Terra (Codex CLI)",
+    "model_id": "gpt-5.6-terra",
+    "command": "codex exec -m gpt-5.6-terra --ignore-user-config --ignore-rules --ephemeral --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox --color never --json {prompt}",
+    "env": {
+      "CODEX_HOME": "~/model-bench-data/.harness/codex"
+    },
+    "version_command": "codex --version",
+    "parser": "codex-json",
+    "billing": "subscription"
+  },
+  "gpt-5-6-luna": {
+    "label": "GPT-5.6-Luna (Codex CLI)",
+    "model_id": "gpt-5.6-luna",
+    "command": "codex exec -m gpt-5.6-luna --ignore-user-config --ignore-rules --ephemeral --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox --color never --json {prompt}",
+    "env": {
+      "CODEX_HOME": "~/model-bench-data/.harness/codex"
+    },
+    "version_command": "codex --version",
+    "parser": "codex-json",
+    "billing": "subscription"
   }
 }

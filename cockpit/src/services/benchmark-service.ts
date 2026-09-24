@@ -1,7 +1,7 @@
 import { getCatalogDao } from "@/db/repositories/benchmark-repository";
 import { listRunAttemptsDao } from "@/db/repositories/attempt-repository";
 import { listRunsDao } from "@/db/repositories/run-repository";
-import { bestAttempt, checksOf, checksPercent } from "@/services/attempt-state";
+import { bestAttempt, checksOf, checksPercent, scoreOf } from "@/services/attempt-state";
 import { NotFoundError } from "@/services/errors/service-errors";
 import type { Attempt } from "@/services/types/domain/attempt-types";
 import type { Benchmark, BenchmarkCategory, BenchmarkGroup } from "@/services/types/domain/benchmark-types";
@@ -24,7 +24,7 @@ export type BenchmarkDetail = {
   attempts: Attempt[];
 };
 
-export type ModelResult = { model: string; attempt: Attempt; checksPct: number };
+export type ModelResult = { model: string; attempt: Attempt; checksPct: number; score: number };
 
 export type BenchmarkCard = {
   benchmark: Benchmark;
@@ -53,9 +53,9 @@ function resultsFor(benchId: string, attempts: Attempt[]): ModelResult[] {
   return [...byModel.entries()]
     .flatMap(([model, list]) => {
       const best = bestAttempt(list);
-      return best ? [{ model, attempt: best, checksPct: checksPercent(checksOf(best)) }] : [];
+      return best ? [{ model, attempt: best, checksPct: checksPercent(checksOf(best)), score: scoreOf(best) ?? 0 }] : [];
     })
-    .sort((a, b) => b.checksPct - a.checksPct || (a.attempt.durationS ?? Infinity) - (b.attempt.durationS ?? Infinity));
+    .sort((a, b) => b.score - a.score || (a.attempt.durationS ?? Infinity) - (b.attempt.durationS ?? Infinity));
 }
 
 /** Catalog cards filtered by group and by a text query on id and title. */

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { benchmarkCardsDal, listModelsDal } from "@/app/dal/cockpit-dal";
+import { benchmarkCardsDal, listModelsDal, missingCapturesDal } from "@/app/dal/cockpit-dal";
+import { syncCapturesAction } from "@/app/runs/actions";
+import { ActionButton } from "@/components/ck/action-button";
 import { Crumbs } from "@/components/ck/crumbs";
 import { difficulty } from "@/components/ck/format";
 import { thumbBackground } from "@/components/ck/primitives";
@@ -13,7 +15,7 @@ import { BENCHMARK_GROUPS } from "@/services/types/domain/benchmark-types";
 export default async function BenchsPage({ searchParams }: { searchParams: Promise<{ cat?: string; q?: string }> }) {
   const { cat, q } = await searchParams;
   const group = groupFromParam(cat);
-  const [all, cards, models] = await Promise.all([benchmarkCardsDal(), benchmarkCardsDal(group, q), listModelsDal()]);
+  const [all, cards, models, missingCaptures] = await Promise.all([benchmarkCardsDal(), benchmarkCardsDal(group, q), listModelsDal(), missingCapturesDal()]);
   const href = (param?: string) => {
     const next = new URLSearchParams();
     if (param) next.set("cat", param);
@@ -48,6 +50,18 @@ export default async function BenchsPage({ searchParams }: { searchParams: Promi
                 style="width:240px;height:32px;padding:0 11px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--fg);font:400 13px/1 var(--mono);outline-color:var(--accent)"
               />
             </Suspense>
+            {missingCaptures ? (
+              <ActionButton
+                action={syncCapturesAction}
+                title="Démarre chaque résultat livré sans capture et le photographie (bench shots)"
+                {...sx(
+                  "height:32px;padding:0 12px;border:1px solid var(--border-strong);border-radius:7px;background:transparent;color:var(--fg);font:500 13px/1 var(--sans);cursor:pointer;white-space:nowrap",
+                  "background:var(--surface-2)",
+                )}
+              >
+                Synchroniser les captures · {missingCaptures}
+              </ActionButton>
+            ) : null}
             <Link
               href={`/lancer?sel=${cards.map((card) => card.benchmark.id).join(",")}`}
               {...sx(
@@ -105,9 +119,9 @@ export default async function BenchsPage({ searchParams }: { searchParams: Promi
                       <div key={result.model} style={css("display:grid;grid-template-columns:128px minmax(0,1fr) 24px;align-items:center;gap:10px")}>
                         <span style={css("font:400 12px/1 var(--mono);color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{result.model}</span>
                         <span style={css("height:3px;border-radius:2px;background:var(--surface-2);overflow:hidden")}>
-                          <span style={css(`display:block;height:100%;width:${result.checksPct}%;background:${index === 0 ? "var(--accent)" : "var(--fg-3)"}`)} />
+                          <span style={css(`display:block;height:100%;width:${result.score}%;background:${index === 0 ? "var(--accent)" : "var(--fg-3)"}`)} />
                         </span>
-                        <span style={css("font:600 12px/1 var(--mono);text-align:right;white-space:nowrap")}>{result.checksPct}</span>
+                        <span style={css("font:600 12px/1 var(--mono);text-align:right;white-space:nowrap")}>{result.score}</span>
                       </div>
                     ))}
                     {card.results.length === 0 ? <div style={css("font:400 12px/1 var(--mono);color:var(--fg-3)")}>pas encore lancé</div> : null}

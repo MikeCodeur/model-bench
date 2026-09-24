@@ -1,4 +1,4 @@
-export type JobKind = "run" | "retry" | "rerun" | "iterate";
+export type JobKind = "run" | "retry" | "rerun" | "iterate" | "shots";
 
 /** A bench CLI process started from the cockpit. */
 export type Job = {

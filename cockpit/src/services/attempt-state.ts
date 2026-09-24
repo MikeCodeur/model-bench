@@ -31,14 +31,22 @@ export function checksPercent(checks: Checks | null): number {
   return checks && checks.total ? Math.round((checks.passed / checks.total) * 100) : 0;
 }
 
-/** Best attempt of a list: most checks passed, then fastest. Running attempts never win. */
+/** Weight of the checks when nobody rated the result: a flawless unrated project scores 60, like a 3-star one. */
+const UNRATED_WEIGHT = 0.6;
+
+/** Score out of 100: the human note (stars × 20) when there is one, otherwise the checks × 0.6. */
+export function scoreOf(attempt: Attempt): number | null {
+  if (attempt.status === "running") return null;
+  if (attempt.rating !== null) return attempt.rating * 20;
+  return Math.round(checksPercent(checksOf(attempt)) * UNRATED_WEIGHT);
+}
+
+/** Best attempt of a list: highest score, then fastest. Running attempts never win. */
 export function bestAttempt(attempts: Attempt[]): Attempt | null {
   const finished = attempts.filter((attempt) => attempt.status !== "running");
   return (
-    finished.sort(
-      (a, b) =>
-        checksPercent(checksOf(b)) - checksPercent(checksOf(a)) || (a.durationS ?? Infinity) - (b.durationS ?? Infinity),
-    )[0] ?? null
+    finished.sort((a, b) => (scoreOf(b) ?? 0) - (scoreOf(a) ?? 0) || (a.durationS ?? Infinity) - (b.durationS ?? Infinity))[0] ??
+    null
   );
 }
 
