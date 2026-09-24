@@ -1,0 +1,171 @@
+<!doctype html>
+<!--
+  Claude Opus 5.5 — intro avant les benches
+  Thème Claude Code orange light · 16:9 · réserve caméra 20 %
+  Sources factuelles : annonce Anthropic du 22/09/2026 + System Card Opus 5.5.
+-->
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Claude Opus 5.5 — intro avant les benches</title>
+  <style>
+    :root{
+      color-scheme:light;
+      --bg:#FFF4ED;--stage:#FFFBF7;--panel:#FFF4ED;--panel-2:#FDECE1;
+      --ink:#1C1917;--muted:#78716C;--orange:#E07A5F;--orange-light:#F4A88F;
+      --rust:#9A3412;--line:rgba(224,122,95,.23);--line-strong:rgba(224,122,95,.48);
+      --green:#23835A;--shadow:rgba(120,70,40,.15);--camera:20vw;
+    }
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 58% 88%,rgba(224,122,95,.20),transparent 36%),linear-gradient(135deg,#FFF4ED,#FDECE1);pointer-events:none}
+    .viewport{position:fixed;inset:0 var(--camera) 0 0;overflow:hidden}
+    .stage{position:absolute;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:var(--stage);border:1px solid var(--line);box-shadow:0 28px 90px var(--shadow)}
+    .stage:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(224,122,95,.042) 1px,transparent 1px),linear-gradient(90deg,rgba(224,122,95,.042) 1px,transparent 1px);background-size:54px 54px;mask-image:linear-gradient(90deg,black,transparent 76%);pointer-events:none}
+    .stage:after{content:"";position:absolute;right:-150px;bottom:-200px;width:780px;height:650px;border-radius:50%;background:radial-gradient(circle,rgba(224,122,95,.26),transparent 68%);filter:blur(28px);pointer-events:none}
+    .camera{position:fixed;top:0;right:0;bottom:0;width:var(--camera);display:grid;place-content:center;color:rgba(120,113,108,.55);border-left:1px dashed var(--line-strong);font:800 13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;text-align:center}
+    .camera:before{content:"CAMÉRA\A20 %";white-space:pre}
+    .slide{position:absolute;inset:0;display:none;padding:88px 112px 78px;z-index:2}
+    .slide.active{display:flex;flex-direction:column}
+    .top{display:flex;align-items:center;justify-content:space-between;min-height:40px}
+    .eyebrow{display:flex;align-items:center;gap:12px;color:var(--rust);font:850 16px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.15em;text-transform:uppercase}
+    .eyebrow:before{content:"";width:10px;height:10px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 7px rgba(224,122,95,.12)}
+    .page{color:var(--muted);font:700 14px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em}
+    .content{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center}
+    h1,h2,h3,p{margin:0}h1,h2{font-weight:900;letter-spacing:-.045em;line-height:.94}h1{font-size:116px}h2{font-size:74px;max-width:1500px}h3{font-size:29px;line-height:1.1}.accent{color:var(--orange)}.rust{color:var(--rust)}
+    .sub{margin-top:28px;max-width:1320px;color:var(--muted);font-size:28px;line-height:1.42}.sub strong{color:var(--ink)}
+    .source{height:28px;color:var(--muted);font:650 14px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace}.source b{color:var(--rust)}
+    .pills{display:flex;gap:18px;margin-top:48px}.pill{min-width:250px;padding:22px 26px;border:1px solid var(--line-strong);border-radius:999px;background:rgba(255,244,237,.86);display:flex;align-items:baseline;gap:12px}.pill b{font-size:34px;color:var(--rust)}.pill span{font-size:17px;color:var(--muted);font-weight:750}
+    .card{border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,rgba(255,244,237,.96),rgba(255,251,247,.88));box-shadow:0 18px 48px rgba(120,70,40,.08)}
+    .positioning{height:520px;margin-top:38px;display:grid;grid-template-columns:1fr 110px 1fr 110px 1fr;align-items:center}
+    .tier{height:360px;padding:38px;display:flex;flex-direction:column;justify-content:space-between}.tier.muted{opacity:.66}.tier.hero{border:2px solid var(--orange);background:linear-gradient(155deg,#FFF8F2,#FDE6D9);transform:translateY(-18px);box-shadow:0 24px 65px rgba(224,122,95,.18)}
+    .tier .label{font:800 14px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}.tier .name{font-size:47px;line-height:1;font-weight:900;letter-spacing:-.04em}.tier .desc{font-size:21px;color:var(--muted);line-height:1.35}.tier.hero .desc{color:var(--rust);font-weight:750}.arrow{text-align:center;color:var(--orange);font-size:58px;font-weight:300}
+    .speed-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:30px;margin-top:42px;height:470px}.speed-main{padding:44px 48px;display:flex;flex-direction:column;justify-content:center}.speed-number{font:900 150px/.82 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.09em;color:var(--orange)}.speed-number small{font:850 36px/1 Inter,system-ui,sans-serif;letter-spacing:-.03em;color:var(--ink)}.speed-main p{font-size:25px;color:var(--muted);margin-top:30px;line-height:1.4}.tokens{display:grid;grid-template-rows:1fr 1fr;gap:22px}.token-card{padding:30px 34px;display:grid;grid-template-columns:90px 1fr;align-items:center;gap:25px}.token-icon{width:78px;height:78px;border-radius:22px;display:grid;place-content:center;background:var(--panel-2);border:1px solid var(--line-strong);font:900 35px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--rust)}.token-card b{font-size:29px}.token-card span{display:block;color:var(--muted);font-size:19px;line-height:1.35;margin-top:8px}
+    .price-wrap{display:grid;grid-template-columns:1.25fr .75fr;gap:28px;margin-top:40px;height:500px}.ptable{overflow:hidden}.prow{height:110px;padding:0 34px;display:grid;grid-template-columns:1.35fr repeat(3,1fr);align-items:center;border-top:1px solid var(--line)}.prow:first-child{border-top:0}.prow.head{height:82px;background:#1A1410;color:#F5F5F4}.prow.hero{background:var(--panel-2)}.prow span:not(:first-child){text-align:right}.prow.head span{font:750 14px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#D6D3D1}.model{font-size:25px;font-weight:900}.prow.hero .model{color:var(--rust)}.value{font:850 28px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.old{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--orange)}
+    .total{padding:38px;display:flex;flex-direction:column;justify-content:center;text-align:center}.total .big{font:900 130px/.9 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.09em;color:var(--orange)}.total b{font-size:30px;margin-top:20px}.total p{font-size:19px;color:var(--muted);line-height:1.4;margin-top:14px}
+    .bench-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:38px;height:510px}.bench{padding:30px 30px 26px;display:flex;flex-direction:column}.bench-title{font:850 17px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--rust);letter-spacing:.03em}.bench-sub{font-size:16px;color:var(--muted);margin-top:8px}.bars{display:grid;gap:21px;margin-top:auto}.bar-row{display:grid;grid-template-columns:118px 1fr 64px;gap:12px;align-items:center}.bar-row .n{font-size:16px;font-weight:800}.track{height:24px;border-radius:999px;background:rgba(120,113,108,.11);overflow:hidden}.fill{height:100%;border-radius:inherit;background:#C9C0BA}.bar-row.hero .fill{background:linear-gradient(90deg,var(--rust),var(--orange))}.bar-row.hero .n,.bar-row.hero .v{color:var(--rust)}.v{text-align:right;font:850 18px/1 ui-monospace,SFMono-Regular,Menlo,monospace}
+    .proof{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:40px}.proof-card{height:315px;padding:38px 42px;display:flex;flex-direction:column;justify-content:center}.proof-card .metric{font:900 78px/.95 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--orange);letter-spacing:-.06em}.proof-card h3{margin-top:22px}.proof-card p{margin-top:12px;color:var(--muted);font-size:20px;line-height:1.38}.transition{margin-top:32px;padding:24px 30px;border-left:7px solid var(--orange);background:var(--panel-2);font-size:28px;font-weight:850}.transition span{color:var(--rust)}
+    .controls{position:fixed;left:22px;bottom:18px;right:calc(var(--camera) + 22px);display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;z-index:10}.buttons{display:flex;gap:8px}.ctrl{width:42px;height:42px;border-radius:50%;border:1px solid var(--line-strong);background:rgba(255,251,247,.94);color:var(--ink);font-size:18px;cursor:pointer}.progress{height:5px;border-radius:99px;background:rgba(120,113,108,.15);overflow:hidden}.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--orange),var(--rust));transition:width .16s ease}.status{color:var(--muted);font:750 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace}
+    @media(max-width:760px){:root{--camera:0px}.camera{display:none}.controls{right:12px;left:12px;bottom:10px}.ctrl{width:36px;height:36px}.stage{box-shadow:none}}
+  </style>
+</head>
+<body>
+  <div class="viewport" id="viewport"><main class="stage" id="stage">
+    <section class="slide active" aria-label="Slide 1 — Claude Opus 5.5">
+      <div class="top"><div class="eyebrow">Anthropic · 22 septembre 2026</div><div class="page">01 / 06</div></div>
+      <div class="content">
+        <h1>Claude Opus <span class="accent">5.5</span></h1>
+        <p class="sub"><strong>Le niveau de Fable 5.1</strong>, dans un modèle plus rapide et moins coûteux à faire tourner.</p>
+        <div class="pills">
+          <div class="pill"><b>+30 %</b><span>vitesse de sortie</span></div>
+          <div class="pill"><b>−40 %</b><span>coût typique vs Opus 5</span></div>
+          <div class="pill"><b>≈ Fable</b><span>sur la plupart des tâches</span></div>
+        </div>
+      </div>
+      <div class="source"><b>Source</b> · anthropic.com/claude-opus-5-5</div>
+    </section>
+
+    <section class="slide" aria-label="Slide 2 — Positionnement">
+      <div class="top"><div class="eyebrow">Le positionnement</div><div class="page">02 / 06</div></div>
+      <div class="content">
+        <h2>Ce n’est pas un petit Opus.<br /><span class="accent">C’est presque un Fable.</span></h2>
+        <div class="positioning">
+          <div class="tier card muted"><div class="label">Avant</div><div class="name">Opus 5</div><div class="desc">Le modèle efficace du quotidien.</div></div>
+          <div class="arrow">→</div>
+          <div class="tier card hero"><div class="label">Maintenant</div><div class="name">Opus 5.5</div><div class="desc">Fable 5.1-level sur la plupart des tâches.</div></div>
+          <div class="arrow">≈</div>
+          <div class="tier card"><div class="label">Référence</div><div class="name">Fable 5.1</div><div class="desc">Le précédent flagship grand public d’Anthropic.</div></div>
+        </div>
+      </div>
+      <div class="source"><b>Formulation Anthropic</b> · « performs at the level of Claude Fable 5.1 on most work »</div>
+    </section>
+
+    <section class="slide" aria-label="Slide 3 — Vitesse et verbosité">
+      <div class="top"><div class="eyebrow">Ce qui se ressent</div><div class="page">03 / 06</div></div>
+      <div class="content">
+        <h2>Plus rapide.<br /><span class="accent">Moins verbeux.</span></h2>
+        <div class="speed-grid">
+          <div class="speed-main card"><div class="speed-number">+30<small>%</small></div><h3>de vitesse de génération en sortie</h3><p>Le modèle affiche les réponses plus vite qu’Opus 5. Sur un agent qui enchaîne les tours, le gain s’additionne.</p></div>
+          <div class="tokens">
+            <div class="token-card card"><div class="token-icon">↘</div><div><b>Moins de tokens pour finir</b><span>Anthropic attribue une partie du coût total réduit à des tâches terminées avec moins de tokens.</span></div></div>
+            <div class="token-card card"><div class="token-icon">=</div><div><b>Moins de texte, même travail</b><span>Le signal intéressant n’est pas la réponse courte : c’est le travail utile par token.</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="source"><b>Source</b> · annonce Anthropic ; coût typique = prix + tokens nécessaires au workload</div>
+    </section>
+
+    <section class="slide" aria-label="Slide 4 — Prix">
+      <div class="top"><div class="eyebrow">Le prix · dollars par million de tokens</div><div class="page">04 / 06</div></div>
+      <div class="content">
+        <h2>Chaque token baisse.<br /><span class="accent">Le cache s’effondre.</span></h2>
+        <div class="price-wrap">
+          <div class="ptable card">
+            <div class="prow head"><span>Modèle</span><span>Input</span><span>Output</span><span>Cache read</span></div>
+            <div class="prow"><span class="model">Opus 5</span><span class="value old">$5</span><span class="value old">$25</span><span class="value old">$0.50</span></div>
+            <div class="prow hero"><span class="model">Opus 5.5</span><span class="value">$4</span><span class="value">$20</span><span class="value">$0.20</span></div>
+          </div>
+          <div class="total card"><div class="big">−40%</div><b>sur un workload typique</b><p>−20 % sur l’input/output.<br />−60 % sur les cache reads, majoritaires en coding agentique.</p></div>
+        </div>
+      </div>
+      <div class="source"><b>Source</b> · Anthropic · cache write Opus 5.5 : $5 / million</div>
+    </section>
+
+    <section class="slide" aria-label="Slide 5 — Benchmarks rapides">
+      <div class="top"><div class="eyebrow">Trois benches rapides · chiffres Anthropic</div><div class="page">05 / 06</div></div>
+      <div class="content">
+        <h2>Le saut est surtout visible<br />sur le <span class="accent">travail agentique</span>.</h2>
+        <div class="bench-grid">
+          <div class="bench card"><div class="bench-title">TERMINAL-BENCH 4.0</div><div class="bench-sub">Agentic coding · score %</div><div class="bars">
+            <div class="bar-row hero"><span class="n">Opus 5.5</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="v">66.4</span></div>
+            <div class="bar-row"><span class="n">Fable 5.1</span><span class="track"><span class="fill" style="width:84%"></span></span><span class="v">55.8</span></div>
+            <div class="bar-row"><span class="n">Opus 5</span><span class="track"><span class="fill" style="width:79%"></span></span><span class="v">52.3</span></div>
+          </div></div>
+          <div class="bench card"><div class="bench-title">SWE-BENCH PRO</div><div class="bench-sub">Software engineering · score %</div><div class="bars">
+            <div class="bar-row hero"><span class="n">Opus 5.5</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="v">89.9</span></div>
+            <div class="bar-row"><span class="n">Fable 5.1</span><span class="track"><span class="fill" style="width:90%"></span></span><span class="v">81.2</span></div>
+            <div class="bar-row"><span class="n">Opus 5</span><span class="track"><span class="fill" style="width:88%"></span></span><span class="v">79.2</span></div>
+          </div></div>
+          <div class="bench card"><div class="bench-title">GDPVAL-AA V2.1</div><div class="bench-sub">Knowledge work · score Elo</div><div class="bars">
+            <div class="bar-row hero"><span class="n">Opus 5.5</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="v">1846</span></div>
+            <div class="bar-row"><span class="n">Fable 5.1</span><span class="track"><span class="fill" style="width:94%"></span></span><span class="v">1735</span></div>
+            <div class="bar-row"><span class="n">Opus 5</span><span class="track"><span class="fill" style="width:93%"></span></span><span class="v">1708</span></div>
+          </div></div>
+        </div>
+      </div>
+      <div class="source"><b>Source</b> · Claude Opus 5.5 System Card · efforts/configurations variables selon l’évaluation</div>
+    </section>
+
+    <section class="slide" aria-label="Slide 6 — Du benchmark au réel">
+      <div class="top"><div class="eyebrow">Les preuves mises en avant par Anthropic</div><div class="page">06 / 06</div></div>
+      <div class="content">
+        <h2>Sur le papier, il gagne.<br /><span class="accent">Maintenant, on le fait travailler.</span></h2>
+        <div class="proof">
+          <div class="proof-card card"><div class="metric">680K</div><h3>lignes de code migrées</h3><p>Un testeur annonce une migration terminée en moins d’une journée, contre plusieurs semaines estimées pour une équipe.</p></div>
+          <div class="proof-card card"><div class="metric">39 / 40</div><h3>optimisations réussies</h3><p>Sur un test interne d’amélioration des temps de chargement, avec comportement de l’application préservé.</p></div>
+        </div>
+        <div class="transition">Les chiffres donnent la direction. <span>Nos 40 projets vont donner le verdict.</span></div>
+      </div>
+      <div class="source"><b>Source</b> · témoignages et tests publiés dans l’annonce Anthropic · pas des mesures indépendantes</div>
+    </section>
+  </main></div>
+  <aside class="camera" aria-hidden="true"></aside>
+  <nav class="controls" aria-label="Navigation des slides">
+    <div class="buttons"><button class="ctrl" id="prev" aria-label="Slide précédente">←</button><button class="ctrl" id="next" aria-label="Slide suivante">→</button></div>
+    <div class="progress" aria-hidden="true"><i id="progress"></i></div>
+    <div class="status" id="status" aria-live="polite">1 / 6</div>
+  </nav>
+  <script>
+    const stage=document.getElementById('stage'),viewport=document.getElementById('viewport');
+    const slides=[...document.querySelectorAll('.slide')],progress=document.getElementById('progress'),status=document.getElementById('status');
+    let current=0;
+    function fit(){const r=viewport.getBoundingClientRect(),s=Math.min(r.width/1920,r.height/1080);stage.style.transform=`scale(${s})`;stage.style.left=((r.width-1920*s)/2)+'px';stage.style.top=((r.height-1080*s)/2)+'px'}
+    function show(i,hash=true){current=Math.max(0,Math.min(slides.length-1,i));slides.forEach((s,n)=>s.classList.toggle('active',n===current));progress.style.width=((current+1)/slides.length*100)+'%';status.textContent=`${current+1} / ${slides.length}`;if(hash)history.replaceState(null,'','#'+(current+1))}
+    function fromHash(){const n=Number(location.hash.slice(1));if(Number.isFinite(n)&&n>0)show(n-1,false)}
+    document.getElementById('prev').onclick=()=>show(current-1);document.getElementById('next').onclick=()=>show(current+1);
+    addEventListener('resize',fit);addEventListener('hashchange',fromHash);addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();show(current+1)}if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(current-1)}if(e.key==='Home')show(0);if(e.key==='End')show(slides.length-1)});
+    addEventListener('dblclick',e=>show(current+(e.clientX<innerWidth/2?-1:1)));
+    fit();fromHash();show(current,!location.hash);
+  </script>
+</body>
+</html>
