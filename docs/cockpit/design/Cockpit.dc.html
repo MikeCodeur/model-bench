@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/design-system-7bd16552-cb04-49f2-9399-6639df1a3b12/high-tiket-v4.7.css">
+<script src="_ds/design-system-7bd16552-cb04-49f2-9399-6639df1a3b12/_ds_bundle.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+body{margin:0;background:#09090b}
+a{color:var(--accent-text);text-underline-offset:.2em}a:hover{color:var(--fg)}
+:root,[data-ck="dark"]{--bg:#09090b;--surface:#111113;--surface-2:#1a1a1d;--border:#232326;--border-strong:#3f3f46;--fg:#fafafa;--fg-2:#a1a1aa;--fg-3:#8b8b94;--primary:#fafafa;--primary-fg:#09090b;--accent:#3b82f6;--accent-text:#60a5fa;--accent-soft:#0f1b2e;--ok:#4ade80;--ok-soft:#0d2016;--warn:#fbbf24;--warn-soft:#271d07;--err:#f87171;--err-soft:#2a1111;--idle:#a1a1aa;--idle-soft:#1c1c1f;--shadow:0 16px 40px rgba(0,0,0,.6);--scrim:rgba(0,0,0,.6);--sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;color-scheme:dark}
+[data-ck="light"]{--bg:#fafafa;--surface:#ffffff;--surface-2:#f4f4f5;--border:#e4e4e7;--border-strong:#d4d4d8;--fg:#09090b;--fg-2:#52525b;--fg-3:#6b6b73;--primary:#09090b;--primary-fg:#fafafa;--accent:#2563eb;--accent-text:#1d4ed8;--accent-soft:#eff4ff;--ok:#15803d;--ok-soft:#ecfdf3;--warn:#a16207;--warn-soft:#fef7e0;--err:#b91c1c;--err-soft:#fef1f1;--idle:#52525b;--idle-soft:#f4f4f5;--shadow:0 16px 40px rgba(9,9,11,.12);--scrim:rgba(9,9,11,.4);color-scheme:light}
+@keyframes ckpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.65)}}
+</style>
+</helmet>
+<div data-ck="{{ theme }}" style="min-height:100vh;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased">
+
+<header style="position:sticky;top:0;z-index:20;border-bottom:1px solid var(--border);background:var(--bg)">
+  <div style="max-width:1440px;margin:0 auto;height:56px;display:flex;align-items:center;gap:14px;padding:0 24px">
+    <button onClick="{{ goHome }}" style="flex:none;display:flex;align-items:center;gap:9px;padding:0;border:0;background:none;color:var(--fg);cursor:pointer;white-space:nowrap">
+      <span style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border-strong);background:var(--surface-2);display:grid;place-items:center;font:700 10.5px/1 var(--mono)">mb</span>
+      <span style="font:600 15px/1 var(--sans);letter-spacing:-.01em">model-bench</span>
+    </button>
+    <nav style="flex:none;display:flex;align-items:center;gap:2px">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+        <button onClick="{{ n.go }}" style="height:32px;padding:0 10px;border:0;border-radius:6px;background:{{ n.bg }};color:{{ n.fg }};font:500 13.5px/1 var(--sans);cursor:pointer;white-space:nowrap" style-hover="color:var(--fg);background:var(--surface-2)">{{ n.label }}</button>
+      </sc-for>
+    </nav>
+    <button onClick="{{ openPal }}" style="margin-left:auto;flex:1 1 120px;max-width:270px;min-width:0;display:flex;align-items:center;gap:10px;height:34px;padding:0 8px 0 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg-3);font:400 13px/1 var(--sans);cursor:pointer;text-align:left" style-hover="border-color:var(--border-strong)">
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Rechercher modèles, benchs, runs…</span>
+      <span style="padding:3px 6px;border:1px solid var(--border);border-radius:4px;font:500 11px/1 var(--mono);color:var(--fg-2)">⌘K</span>
+    </button>
+    <button onClick="{{ live.open }}" style="flex:0 1 auto;min-width:0;overflow:hidden;display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg);font:500 12.5px/1 var(--mono);cursor:pointer;white-space:nowrap" style-hover="border-color:var(--border-strong)">
+      <sc-if value="{{ live.running }}" hint-placeholder-val="{{ true }}">{{ pulse }}</sc-if>
+      <span>{{ live.slugShort }}</span><span style="color:var(--fg-3)">{{ live.progress }}</span><span style="color:var(--fg-2)">{{ live.cost }}</span>
+    </button>
+    <button onClick="{{ toggleTheme }}" title="Changer de thème" style="flex:none;height:34px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg-2);font:500 11.5px/1 var(--mono);cursor:pointer" style-hover="color:var(--fg);border-color:var(--border-strong)">{{ themeLabel }}</button>
+    <button onClick="{{ goLaunch }}" style="flex:none;height:34px;padding:0 14px;border:1px solid var(--primary);border-radius:8px;background:var(--primary);color:var(--primary-fg);font:600 13.5px/1 var(--sans);cursor:pointer;white-space:nowrap" style-hover="opacity:.88">Lancer un run</button>
+  </div>
+</header>
+
+<div style="max-width:1440px;margin:0 auto;padding:16px 28px 64px">
+  <div style="position:relative;display:flex;align-items:center;min-height:32px;margin-bottom:18px">
+    <sc-if value="{{ anyCrumb }}" hint-placeholder-val="{{ false }}"><div onClick="{{ closeCrumb }}" style="position:fixed;inset:0;z-index:30"></div></sc-if>
+    <sc-for list="{{ crumbs }}" as="c" hint-placeholder-count="2">
+      <div style="position:relative;display:flex;align-items:center;z-index:35">
+        <sc-if value="{{ c.sep }}" hint-placeholder-val="{{ false }}"><span style="padding:0 4px;color:var(--fg-3);font:400 14px/1 var(--mono)">/</span></sc-if>
+        <button onClick="{{ c.click }}" style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;border:1px solid {{ c.bd }};border-radius:6px;background:{{ c.bg }};color:{{ c.fg }};font:500 13px/1 var(--mono);cursor:pointer;white-space:nowrap" style-hover="background:var(--surface-2);color:var(--fg)">
+          <span>{{ c.label }}</span>
+          <sc-if value="{{ c.hasMenu }}" hint-placeholder-val="{{ false }}"><span style="font-size:8px;color:var(--fg-3)">▼</span></sc-if>
+        </button>
+        <sc-if value="{{ c.open }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:34px;left:0;z-index:40;min-width:320px;max-height:380px;overflow:auto;padding:5px;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:var(--shadow)">
+            <div style="padding:7px 9px;font:500 11px/1 var(--mono);color:var(--fg-3)">{{ c.menuTitle }}</div>
+            <sc-for list="{{ c.opts }}" as="o" hint-placeholder-count="4">
+              <button onClick="{{ o.go }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:7px 9px;border:0;border-radius:5px;background:{{ o.bg }};color:var(--fg);font:500 13px/1.3 var(--mono);text-align:left;cursor:pointer" style-hover="background:var(--surface-2)"><span>{{ o.label }}</span><span style="font:400 11.5px/1 var(--mono);color:var(--fg-3);white-space:nowrap">{{ o.sub }}</span></button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ is.home }}" hint-placeholder-val="{{ true }}">
+  <div data-screen-label="Accueil" style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--border);border-radius:10px;background:var(--surface)">
+      <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+        <div style="padding:16px 18px;border-left:1px solid {{ k.bl }}">
+          <div style="font:500 12px/1 var(--mono);color:var(--fg-3)">{{ k.k }}</div>
+          <div style="margin-top:10px;font:600 26px/1 var(--mono);letter-spacing:-.02em">{{ k.v }}</div>
+          <div style="margin-top:7px;font:400 12px/1.3 var(--mono);color:var(--fg-2)">{{ k.s }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));grid-template-columns:minmax(0,1fr) minmax(280px,380px);gap:18px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface)">
+          <div style="display:flex;align-items:center;gap:10px;height:48px;padding:0 16px;border-bottom:1px solid var(--border);white-space:nowrap">
+            <sc-if value="{{ live.running }}" hint-placeholder-val="{{ true }}">{{ pulse }}</sc-if>
+            <span style="flex:none;font:600 14px/1 var(--sans)">{{ live.statusTxt }}</span>
+            <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;font:500 13px/1 var(--mono);color:var(--fg-2)">{{ live.slug }}</span>
+            <span style="min-width:0;flex:0 10 auto;overflow:hidden;text-overflow:ellipsis;font:400 12px/1 var(--mono);color:var(--fg-3)">via {{ live.tool }} · {{ live.start }}</span>
+            <div style="margin-left:auto;flex:none;display:flex;gap:6px">
+              <sc-if value="{{ live.running }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ live.stop }}" style="display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 10px;border:1px solid var(--border-strong);border-radius:6px;background:transparent;color:var(--fg);font:500 12.5px/1 var(--sans);cursor:pointer" style-hover="border-color:var(--err);color:var(--err)"><span style="width:7px;height:7px;background:currentColor;border-radius:1px"></span>Arrêter</button>
+              </sc-if>
+              <button onClick="{{ live.open }}" style="height:28px;padding:0 10px;border:1px solid var(--border-strong);border-radius:6px;background:transparent;color:var(--fg);font:500 12.5px/1 var(--sans);cursor:pointer" style-hover="background:var(--surface-2)">Ouvrir →</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(max-content,.6fr));border-bottom:1px solid var(--border)">
+            <div style="padding:16px;min-width:0">
+              <div style="font:500 12px/1 var(--mono);color:var(--fg-3)">en cours</div>
+              <div style="margin-top:8px;font:500 14px/1.3 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ live.curSlug }}</div>
+              <div style="margin-top:10px;display:flex;align-items:baseline;gap:8px"><span style="font:600 28px/1 var(--mono);color:var(--accent-text)">{{ live.el }}</span><span style="font:400 12.5px/1 var(--mono);color:var(--fg-3)">/ 30:00</span></div>
+              <div style="margin-top:10px;height:3px;border-radius:2px;background:var(--surface-2);overflow:hidden"><div style="height:100%;width:{{ live.elPct }};background:var(--accent)"></div></div>
+            </div>
+            <div style="padding:16px;border-left:1px solid var(--border)"><div style="font:500 12px/1 var(--mono);color:var(--fg-3)">progression</div><div style="margin-top:10px;font:600 22px/1 var(--mono);white-space:nowrap">{{ live.progress }}</div></div>
+            <div style="padding:16px;border-left:1px solid var(--border)"><div style="font:500 12px/1 var(--mono);color:var(--fg-3)">coût</div><div style="margin-top:10px;font:600 22px/1 var(--mono);white-space:nowrap">{{ live.cost }}</div></div>
+            <div style="padding:16px;border-left:1px solid var(--border)"><div style="font:500 12px/1 var(--mono);color:var(--fg-3)">durée</div><div style="margin-top:10px;font:600 22px/1 var(--mono);white-space:nowrap">{{ live.durTxt }}</div></div>
+          </div>
+          <div style="padding:14px 16px 16px;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px">
+            <sc-for list="{{ live.segs }}" as="sg" hint-placeholder-count="10">
+              <div style="display:flex;flex-direction:column;gap:6px;min-width:0"><span style="height:6px;border-radius:2px;background:{{ sg.bg }}"></span><span style="font:400 11px/1.2 var(--mono);color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ sg.title }}</span></div>
+            </sc-for>
+          </div>
+        </section>
+        <section>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px">
+            <h2 style="margin:0;font:600 15px/1.2 var(--sans)">Derniers résultats</h2>
+            <button onClick="{{ goRun }}" style="padding:0;border:0;background:none;color:var(--fg-2);font:500 13px/1 var(--sans);cursor:pointer" style-hover="color:var(--fg)">Voir les runs →</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+            <sc-for list="{{ homeResults }}" as="r" hint-placeholder-count="6">
+              <button onClick="{{ r.open }}" style="display:flex;flex-direction:column;padding:0;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--fg);text-align:left;overflow:hidden;cursor:pointer" style-hover="border-color:var(--border-strong)">
+                <div style="position:relative;width:100%;aspect-ratio:16/9;background:{{ r.thumb }};border-bottom:1px solid var(--border)">
+                  <sc-if value="{{ r.v2 }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:8px;right:8px;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.78);color:#fafafa;font:600 11px/1 var(--mono)">v2</span></sc-if>
+                  <sc-if value="{{ r.big }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:8px;bottom:8px;padding:5px 7px;border-radius:5px;background:rgba(0,0,0,.8);color:#fafafa;font:600 15px/1 var(--mono)">{{ r.scoreTxt }}</span></sc-if>
+                </div>
+                <div style="width:100%;padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px">
+                  <div style="min-width:0"><div style="font:500 13px/1.3 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.slug }}</div><div style="margin-top:2px;font:400 12px/1.3 var(--mono);color:var(--fg-3)">{{ r.model }}</div></div>
+                  <div style="display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap">
+                    <span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:5px;border:1px {{ r.st.bs }} {{ r.st.bd }};background:{{ r.st.bg }};color:{{ r.st.fg }};font:500 11.5px/1 var(--mono);white-space:nowrap"><span>{{ r.st.g }}</span>{{ r.st.label }}</span>
+                    <sc-if value="{{ r.small }}" hint-placeholder-val="{{ false }}"><span style="font:600 12px/1 var(--mono)">{{ r.scoreTxt }}</span></sc-if>
+                    <span style="margin-left:auto;font:400 11.5px/1 var(--mono);color:var(--fg-2);white-space:nowrap">{{ r.meta }}</span>
+                  </div>
+                </div>
+              </button>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+      <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface)">
+        <div style="display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 16px;border-bottom:1px solid var(--border)">
+          <h2 style="margin:0;font:600 14px/1 var(--sans)">Classement</h2>
+          <button onClick="{{ goLeaderboard }}" style="padding:0;border:0;background:none;color:var(--fg-2);font:500 12.5px/1 var(--sans);cursor:pointer" style-hover="color:var(--fg)">Tout voir →</button>
+        </div>
+        <sc-for list="{{ topModels }}" as="m" hint-placeholder-count="6">
+          <button onClick="{{ m.open }}" style="width:100%;display:grid;grid-template-columns:20px minmax(0,1fr) 36px 60px;align-items:center;gap:10px;padding:11px 16px;border:0;border-bottom:1px solid var(--border);background:transparent;color:var(--fg);text-align:left;cursor:pointer" style-hover="background:var(--surface-2)">
+            <span style="font:600 12px/1 var(--mono);color:{{ m.rankFg }}">{{ m.rank }}</span>
+            <span style="min-width:0"><span style="display:block;font:500 13px/1.25 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.slug }}</span><span style="display:block;margin-top:6px;height:3px;border-radius:2px;background:var(--surface-2);overflow:hidden"><span style="display:block;height:100%;width:{{ m.pct }};background:{{ m.barBg }}"></span></span></span>
+            <span style="font:600 15px/1 var(--mono);text-align:right">{{ m.score }}</span>
+            <span style="font:400 12px/1 var(--mono);color:var(--fg-2);text-align:right">{{ m.cost }}</span>
+          </button>
+        </sc-for>
+      </section>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.benches }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Catalogue des benchs" style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <div><h1 style="margin:0;font:600 22px/1.2 var(--sans);letter-spacing:-.015em">Benchs</h1><div style="margin-top:4px;font:400 13px/1.3 var(--mono);color:var(--fg-2)">{{ benchCount }}</div></div>
+      <div style="display:flex;gap:8px">
+        <input value="{{ benchQ }}" onChange="{{ onBenchQ }}" placeholder="Filtrer par nom…" style="width:240px;height:32px;padding:0 11px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--fg);font:400 13px/1 var(--mono);outline-color:var(--accent)">
+        <button onClick="{{ launchFiltered }}" style="height:32px;padding:0 13px;border:1px solid var(--primary);border-radius:7px;background:var(--primary);color:var(--primary-fg);font:600 13px/1 var(--sans);cursor:pointer" style-hover="opacity:.88">Lancer la sélection</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <sc-for list="{{ benchChips }}" as="c" hint-placeholder-count="6">
+        <button onClick="{{ c.go }}" style="display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 10px;border:1px solid {{ c.bd }};border-radius:6px;background:{{ c.bg }};color:{{ c.fg }};font:500 12.5px/1 var(--mono);cursor:pointer">{{ c.label }}<span style="opacity:.7">{{ c.n }}</span></button>
+      </sc-for>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">
+      <sc-for list="{{ benchCards }}" as="b" hint-placeholder-count="6">
+        <article style="display:flex;flex-direction:column;border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden">
+          <button onClick="{{ b.open }}" style="position:relative;padding:0;border:0;border-bottom:1px solid var(--border);aspect-ratio:16/9;background:{{ b.thumb }};cursor:pointer"><span style="position:absolute;top:8px;left:8px;padding:3px 7px;border-radius:4px;background:rgba(0,0,0,.78);color:#fafafa;font:500 11px/1 var(--mono)">{{ b.cat }}</span></button>
+          <div style="padding:12px 14px 14px;display:flex;flex-direction:column;gap:11px;flex:1">
+            <div>
+              <div style="font:600 13.5px/1.3 var(--mono)">{{ b.slug }}</div>
+              <div style="margin-top:3px;font:400 13px/1.35 var(--sans);color:var(--fg-2)">{{ b.title }}</div>
+              <div style="margin-top:8px;display:flex;gap:12px;font:400 11.5px/1 var(--mono);color:var(--fg-3)"><span>{{ b.diff }}</span><span>{{ b.runs }}</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px solid var(--border)">
+              <sc-for list="{{ b.tops }}" as="t" hint-placeholder-count="3">
+                <div style="display:grid;grid-template-columns:128px minmax(0,1fr) 24px;align-items:center;gap:10px">
+                  <span style="font:400 12px/1 var(--mono);color:var(--fg-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</span>
+                  <span style="height:3px;border-radius:2px;background:var(--surface-2);overflow:hidden"><span style="display:block;height:100%;width:{{ t.pct }};background:{{ t.bar }}"></span></span>
+                  <span style="font:600 12px/1 var(--mono);text-align:right">{{ t.s }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:auto;display:flex;gap:6px">
+              <button onClick="{{ b.compare }}" style="flex:1;height:28px;border:1px solid var(--border-strong);border-radius:6px;background:transparent;color:var(--fg);font:500 12.5px/1 var(--sans);cursor:pointer" style-hover="background:var(--surface-2)">Comparer</button>
+              <button onClick="{{ b.launch }}" style="flex:1;height:28px;border:1px solid var(--border-strong);border-radius:6px;background:transparent;color:var(--fg);font:500 12.5px/1 var(--sans);cursor:pointer" style-hover="background:var(--surface-2)">Lancer</button>
+            </div>
+          </div>
+        </article>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.leaderboard }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Classement des modèles" style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <div><h1 style="margin:0;font:600 22px/1.2 var(--sans);letter-spacing:-.015em">Classement</h1><div style="margin-top:4px;font:400 13px/1.3 var(--mono);color:var(--fg-2)">6 modèles · meilleur résultat par bench · {{ lbCatLabel }}</div></div>
+      <div style="display:flex;padding:3px;border:1px solid var(--border);border-radius:8px;background:var(--surface)">
+        <sc-for list="{{ lbSorts }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.go }}" style="height:26px;padding:0 11px;border:0;border-radius:5px;background:{{ s.bg }};color:{{ s.fg }};font:500 12.5px/1 var(--mono);cursor:pointer">{{ s.label }}</button></sc-for>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <sc-for list="{{ lbChips }}" as="c" hint-placeholder-count="6"><button onClick="{{ c.go }}" style="height:28px;padding:0 10px;border:1px solid {{ c.bd }};border-radius:6px;background:{{ c.bg }};color:{{ c.fg }};font:500 12.5px/1 var(--mono);cursor:pointer">{{ c.label }}</button></sc-for>
+    </div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start">
+      <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow-x:auto">
+        <div style="min-width:760px">
+          <div style="display:grid;grid-template-columns:36px minmax(220px,1.6fr) minmax(150px,1fr) 70px 90px 74px 80px;gap:12px;align-items:center;height:38px;padding:0 16px;border-bottom:1px solid var(--border);font:500 11.5px/1 var(--mono);color:var(--fg-3)"><span>#</span><span>modèle</span><span>score</span><span>livrés</span><span>$/projet</span><span>durée</span><span>score/$</span></div>
+          <sc-for list="{{ lbRows }}" as="r" hint-placeholder-count="6">
+            <button onClick="{{ r.open }}" style="width:100%;display:grid;grid-template-columns:36px minmax(220px,1.6fr) minmax(150px,1fr) 70px 90px 74px 80px;gap:12px;align-items:center;min-height:58px;padding:0 16px;border:0;border-bottom:1px solid var(--border);background:transparent;color:var(--fg);text-align:left;cursor:pointer" style-hover="background:var(--surface-2)">
+              <span style="font:600 13px/1 var(--mono);color:{{ r.rankFg }}">{{ r.rank }}</span>
+              <span style="display:flex;align-items:center;gap:11px;min-width:0">
+                <span style="width:28px;height:28px;flex:none;display:grid;place-items:center;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface-2);font:600 10.5px/1 var(--mono);color:var(--fg-2)">{{ r.ab }}</span>
+                <span style="min-width:0"><span style="display:block;font:600 13.5px/1.2 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.slug }}</span><span style="display:block;margin-top:3px;font:400 12px/1.2 var(--sans);color:var(--fg-3)">{{ r.name }} · via {{ r.tool }}</span></span>
+              </span>
+              <span style="display:flex;align-items:center;gap:10px"><span style="width:26px;font:600 15px/1 var(--mono)">{{ r.score }}</span><span style="flex:1;height:4px;border-radius:2px;background:var(--surface-2);overflow:hidden"><span style="display:block;height:100%;width:{{ r.pct }};background:{{ r.barBg }}"></span></span></span>
+              <span style="font:400 13px/1 var(--mono)">{{ r.rate }}</span>
+              <span style="font:400 13px/1 var(--mono)">{{ r.cost }}</span>
+              <span style="font:400 13px/1 var(--mono)">{{ r.dur }}</span>
+              <span style="font:400 13px/1 var(--mono);color:var(--fg-2)">{{ r.ppd }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </section>
+      <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:14px 16px 16px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px"><h2 style="margin:0;font:600 14px/1 var(--sans)">Score × coût</h2><span style="font:400 11.5px/1 var(--mono);color:var(--fg-3)">↖ meilleur rapport</span></div>
+        <div style="display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px">
+          <div style="position:relative;height:300px;font:400 10.5px/1 var(--mono);color:var(--fg-3)"><span style="position:absolute;top:-4px;right:0">100</span><span style="position:absolute;top:calc(50% - 5px);right:0">75</span><span style="position:absolute;bottom:-4px;right:0">50</span></div>
+          <div style="position:relative;height:300px;border-left:1px solid var(--border-strong);border-bottom:1px solid var(--border-strong);background:linear-gradient(var(--border) 1px,transparent 1px) 0 0/100% 25%">
+            <sc-for list="{{ lbRows }}" as="r" hint-placeholder-count="6">
+              <div style="position:absolute;left:{{ r.x }};bottom:{{ r.y }};transform:translate(-5px,5px);display:flex;align-items:center;gap:6px;white-space:nowrap">
+                <span style="width:10px;height:10px;border-radius:50%;background:{{ r.dot }};box-shadow:0 0 0 2px var(--surface)"></span>
+                <span style="font:500 11.5px/1 var(--mono);color:var(--fg-2)">{{ r.short }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <span></span>
+          <div style="display:flex;justify-content:space-between;font:400 10.5px/1 var(--mono);color:var(--fg-3)"><span>0 $</span><span>1 $</span><span>2 $</span><span>3 $</span></div>
+        </div>
+      </section>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.run }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Un run" style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px"><h1 style="margin:0;font:600 22px/1.2 var(--mono);letter-spacing:-.01em">{{ run.slug }}</h1><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:5px;border:1px solid var(--border-strong);color:var(--fg-2);font:500 11.5px/1 var(--mono)"><sc-if value="{{ run.isLive }}" hint-placeholder-val="{{ false }}">{{ pulse }}</sc-if>{{ run.statusLabel }}</span></div>
+        <div style="margin-top:5px;font:400 13px/1.3 var(--mono);color:var(--fg-2)">{{ run.sub }}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <sc-if value="{{ run.isLive }}" hint-placeholder-val="{{ false }}"><button onClick="{{ run.stop }}" style="display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--err);border-radius:7px;background:transparent;color:var(--err);font:600 13px/1 var(--sans);cursor:pointer" style-hover="background:var(--err-soft)"><span style="width:8px;height:8px;background:currentColor;border-radius:1px"></span>Arrêter le run</button></sc-if>
+        <button onClick="{{ run.compare }}" style="height:32px;padding:0 12px;border:1px solid var(--border-strong);border-radius:7px;background:transparent;color:var(--fg);font:500 13px/1 var(--sans);cursor:pointer" style-hover="background:var(--surface-2)">Comparer</button>
+        <button onClick="{{ run.rerun }}" style="height:32px;padding:0 12px;border:1px solid var(--primary);border-radius:7px;background:var(--primary);color:var(--primary-fg);font:600 13px/1 var(--sans);cursor:pointer" style-hover="opacity:.88">↻ Relancer le run</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:minmax(0,1.8fr) repeat(4,minmax(0,1fr));border:1px solid var(--border);border-radius:10px;background:var(--surface)">
+      <div style="padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;font:500 12px/1 var(--mono);color:var(--fg-3)"><span>progression</span><span style="color:var(--fg)">{{ run.progress }}</span></div>
+        <div style="margin-top:14px;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px"><sc-for list="{{ run.segs }}" as="sg" hint-placeholder-count="10"><span title="{{ sg.title }}" style="height:8px;border-radius:2px;background:{{ sg.bg }}"></span></sc-for></div>
+      </div>
+      <div style="padding:14px 16px;border-left:1px solid var(--border)"><div style="font:500 12px/1 var(--mono);color:var(--fg-3)">livrés</div><div style="margin-top:9px;font:600 22px/1 var(--mono)">{{ run.done }}</div></div>
+      <div style="padding:14px 16px;border-left:1px solid var(--border)"><div style="font:500 12px/1 var(--mono);color:var(--fg-3)">score global</div><div style="margin-top:9px;font:600 22px/1 var(--mono)">{{ run.avg }}</div></div>
+      <div style="padding:14px 16px;border-left:1px solid var(--border)"><div style="font:500 12px/1 var(--mono);color:var(--fg-3)">coût</div><div style="margin-top:9px;font:600 22px/1 var(--mono)">{{ run.cost }}</div></div>
+      <div style="padding:14px 16px;border-left:1px solid var(--border)"><div style="font:500 12px/1 var(--mono);color:var(--fg-3)">durée</div><div style="margin-top:9px;font:600 22px/1 var(--mono)">{{ run.dur }}</div></div>
+    </div>
+    <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow-x:auto">
+      <div style="min-width:1000px">
+        <div style="display:grid;grid-template-columns:32px minmax(280px,2fr) 180px 110px 96px 84px 72px 120px;gap:14px;align-items:center;height:38px;padding:0 16px;border-bottom:1px solid var(--border);font:500 11.5px/1 var(--mono);color:var(--fg-3)"><span>#</span><span>bench</span><span>état</span><span>score</span><span>durée</span><span>coût</span><span>tokens</span><span></span></div>
+        <sc-for list="{{ run.rows }}" as="r" hint-placeholder-count="10">
+          <div style="display:grid;grid-template-columns:32px minmax(280px,2fr) 180px 110px 96px 84px 72px 120px;gap:14px;align-items:center;min-height:58px;padding:6px 16px;border-bottom:1px solid var(--border);background:{{ r.rowBg }}">
+            <span style="font:400 12px/1 var(--mono);color:var(--fg-3)">{{ r.n }}</span>
+            <span style="display:flex;align-items:center;gap:12px;min-width:0">
+              <span style="width:60px;height:36px;flex:none;border-radius:5px;background:{{ r.thumb }};border:1px solid var(--border);opacity:{{ r.thumbOp }}"></span>
+              <span style="min-width:0"><span style="display:block;font:500 13.5px/1.25 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.slug }}</span><span style="display:block;margin-top:3px;font:400 12px/1.2 var(--sans);color:var(--fg-3)">{{ r.meta }}</span></span>
+            </span>
+            <span style="display:flex;align-items:center;gap:6px">
+              <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:5px;border:1px {{ r.st.bs }} {{ r.st.bd }};background:{{ r.st.bg }};color:{{ r.st.fg }};font:500 11.5px/1 var(--mono);white-space:nowrap"><sc-if value="{{ r.isRunning }}" hint-placeholder-val="{{ false }}">{{ pulse }}</sc-if><span>{{ r.st.g }}</span>{{ r.st.label }}</span>
+              <sc-if value="{{ r.v2 }}" hint-placeholder-val="{{ false }}"><span style="height:22px;display:inline-flex;align-items:center;padding:0 6px;border:1px solid var(--border-strong);border-radius:5px;color:var(--fg);font:600 11px/1 var(--mono)">v2</span></sc-if>
+            </span>
+            <span>
+              <sc-if value="{{ r.hasScore }}" hint-placeholder-val="{{ false }}">
+                <span style="display:flex;align-items:center;gap:10px">
+                  <span style="font:600 16px/1 var(--mono)">{{ r.scoreTxt }}</span>
+                  <span style="display:flex;flex-direction:column;gap:2px;width:40px">
+                    <span style="height:3px;background:var(--surface-2)"><span style="display:block;height:100%;width:{{ r.fp }};background:var(--fg-2)"></span></span>
+                    <span style="height:3px;background:var(--surface-2)"><span style="display:block;height:100%;width:{{ r.vp }};background:var(--fg-2)"></span></span>
+                    <span style="height:3px;background:var(--surface-2)"><span style="display:block;height:100%;width:{{ r.ep }};background:var(--fg-2)"></span></span>
+                  </span>
+                </span>
+              </sc-if>
+              <sc-if value="{{ r.noScore }}" hint-placeholder-val="{{ true }}"><span style="font:400 12px/1 var(--mono);color:var(--fg-3)">{{ r.scoreTxt }}</span></sc-if>
+            </span>
+            <span style="display:flex;flex-direction:column;gap:5px">
+              <span style="font:500 13px/1 var(--mono);color:{{ r.durFg }}">{{ r.durTxt }}</span>
+              <sc-if value="{{ r.isRunning }}" hint-placeholder-val="{{ false }}"><span style="height:2px;border-radius:2px;background:var(--surface-2);overflow:hidden"><span style="display:block;height:100%;width:{{ r.pct }};background:var(--accent)"></span></span></sc-if>
+            </span>
+            <span style="font:400 13px/1 var(--mono)">{{ r.costTxt }}</span>
+            <span style="font:400 13px/1 var(--mono);color:var(--fg-2)">{{ r.tokTxt }}</span>
+            <span style="display:flex;gap:6px;justify-content:flex-end">
+              <button onClick="{{ r.open }}" disabled="{{ r.cantOpen }}" style="height:28px;padding:0 10px;border:1px solid var(--border-strong);border-radius:6px;background:transparent;color:var(--fg);font:500 12.5px/1 var(--sans);cursor:pointer;opacity:{{ r.openOp }}" style-hover="background:var(--surface-2)">Ouvrir</button>
+              <button onClick="{{ r.rerun }}" title="Relancer ce bench" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--fg-2);font:500 13px/1 var(--sans);cursor:pointer" style-hover="color:var(--fg);border-color:var(--border-strong)">↻</button>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.result }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Un résultat" style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <div>
+        <h1 style="margin:0;font:600 22px/1.2 var(--mono);letter-spacing:-.01em">{{ res.slug }}</h1>
+        <div style="margin-top:5px;font:400 13px/1.3 var(--mono);color:var(--fg-2)">{{ res.title }} · {{ res.modelSlug }} · via {{ res.tool }} · {{ res.date }}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <sc-if value="{{ res.hasV2 }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;padding:3px;border:1px solid var(--border);border-radius:8px;background:var(--surface)">
+            <sc-for list="{{ res.versions }}" as="v" hint-placeholder-count="2"><button onClick="{{ v.go }}" style="display:flex;align-items:center;gap:8px;height:26px;padding:0 10px;border:0;border-radius:5px;background:{{ v.bg }};color:{{ v.fg }};font:600 12.5px/1 var(--mono);cursor:pointer">{{ v.label }}<span style="font-weight:400;font-size:11.5px;opacity:.8">{{ v.sub }}</span></button></sc-for>
+          </div>
+        </sc-if>
+        <button onClick="{{ res.compare }}" style="height:32px;padding:0 12px;border:1px solid var(--border-strong);border-radius:7px;background:transparent;color:var(--fg);font:500 13px/1 var(--sans);cursor:pointer" style-hover="background:var(--surface-2)">{{ res.compareLabel }}</button>
+        <button onClick="{{ res.rerun }}" style="height:32px;padding:0 12px;border:1px solid var(--border-strong);border-radius:7px;background:transparent;color:var(--fg);font:500 13px/1 var(--sans);cursor:pointer" style-hover="background:var(--surface-2)">↻ Relancer</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start">
+      <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;height:40px;padding:0 12px;border-bottom:1px solid var(--border)">
+          <span style="display:flex;align-items:center;gap:9px;font:400 12.5px/1 var(--mono);color:var(--fg-2)"><span style="width:7px;height:7px;border-radius:50%;background:{{ res.st.fg }}"></span>{{ res.url }}</span>
+          <button onClick="{{ fullscreen }}" style="height:26px;padding:0 9px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--fg-2);font:500 12px/1 var(--sans);cursor:pointer" style-hover="color:var(--fg);border-color:var(--border-strong)">Plein écran</button>
+        </div>
+        <div ref="{{ stageRef }}" style="position:relative;aspect-ratio:16/9;background:#030304;overflow:hidden">
+          <sc-if value="{{ res.isBH }}" hint-placeholder-val="{{ true }}"><canvas data-bh="1" data-spin="{{ res.p.spin }}" data-tilt="{{ res.p.tilt }}" data-glow="{{ res.p.glow }}" data-n="{{ res.p.n }}" data-pal="{{ res.p.pal }}" data-lens="{{ res.p.lens }}" data-stars="{{ res.p.stars }}" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas></sc-if>
+          <sc-if value="{{ res.isThumb }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;background:{{ res.thumb }}"></div></sc-if>
+          <sc-if value="{{ res.isFail }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;display:grid;place-items:center;background:#0b0b0c"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px;text-align:center"><span style="font:600 14px/1.3 var(--mono);color:#fafafa">{{ res.st.g }} {{ res.st.label }}</span><span style="max-width:48ch;font:400 12.5px/1.5 var(--mono);color:#a1a1aa">{{ res.failMsg }}</span></div></div></sc-if>
+          <span style="position:absolute;left:10px;bottom:10px;padding:4px 7px;border-radius:4px;background:rgba(0,0,0,.72);color:#e4e4e7;font:400 11.5px/1 var(--mono)">{{ res.stageTag }}</span>
+        </div>
+        <sc-if value="{{ res.hasControls }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;padding:14px 16px;border-top:1px solid var(--border)">
+            <sc-for list="{{ res.controls }}" as="k" hint-placeholder-count="3">
+              <label style="display:flex;flex-direction:column;gap:8px"><span style="display:flex;justify-content:space-between;font:400 12px/1 var(--mono);color:var(--fg-2)"><span>{{ k.label }}</span><span style="color:var(--fg)">{{ k.txt }}</span></span><input type="range" min="{{ k.min }}" max="{{ k.max }}" step="{{ k.step }}" value="{{ k.val }}" onChange="{{ k.on }}" style="width:100%;accent-color:var(--accent)"></label>
+            </sc-for>
+            <button onClick="{{ res.toggleStars }}" style="align-self:end;display:flex;align-items:center;justify-content:space-between;height:30px;padding:0 10px;border:1px solid var(--border-strong);border-radius:6px;background:transparent;color:var(--fg);font:400 12px/1 var(--mono);cursor:pointer">stars<span style="color:{{ res.starsFg }}">{{ res.starsTxt }}</span></button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ res.noControls }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:1px solid var(--border);font:400 12.5px/1.4 var(--mono);color:var(--fg-2)"><span>{{ res.noControlsMsg }}</span><button onClick="{{ res.suggestPanel }}" style="height:26px;padding:0 9px;border:1px solid var(--border-strong);border-radius:5px;background:transparent;color:var(--fg);font:500 12px/1 var(--sans);cursor:pointer;white-space:nowrap" style-hover="background:var(--surface-2)">Demander un panneau</button></div>
+        </sc-if>
+      </section>
+      <aside style="display:flex;flex-direction:column;gap:12px">
+        <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font:500 12px/1 var(--mono);color:var(--fg-3)">score</span><span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:5px;border:1px {{ res.st.bs }} {{ res.st.bd }};background:{{ res.st.bg }};color:{{ res.st.fg }};font:500 11.5px/1 var(--mono)"><span>{{ res.st.g }}</span>{{ res.st.label }}</span></div>
+          <div style="margin-top:12px;display:flex;align-items:baseline;gap:6px"><span style="font:600 56px/.9 var(--mono);letter-spacing:-.04em">{{ res.scoreTxt }}</span><span style="font:400 14px/1 var(--mono);color:var(--fg-3)">{{ res.scoreUnit }}</span></div>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ res.subs }}" as="s" hint-placeholder-count="3"><div style="display:grid;grid-template-columns:96px minmax(0,1fr) 26px;align-items:center;gap:10px"><span style="font:400 12px/1 var(--mono);color:var(--fg-2)">{{ s.k }}</span><span style="height:4px;border-radius:2px;background:var(--surface-2);overflow:hidden"><span style="display:block;height:100%;width:{{ s.pct }};background:var(--fg)"></span></span><span style="font:600 12px/1 var(--mono);text-align:right">{{ s.v }}</span></div></sc-for>
+          </div>
+        </section>
+        <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface)">
+          <sc-for list="{{ res.metrics }}" as="m" hint-placeholder-count="5"><div style="display:flex;justify-content:space-between;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)"><span style="font:400 12.5px/1.3 var(--mono);color:var(--fg-3)">{{ m.k }}</span><span style="font:500 12.5px/1.3 var(--mono);color:{{ m.fg }};text-align:right">{{ m.v }}</span></div></sc-for>
+          <div style="padding:10px 16px;font:400 11.5px/1.4 var(--mono);color:var(--fg-3)">{{ res.delta }}</div>
+        </section>
+        <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+          <span style="font:500 12px/1 var(--mono);color:var(--fg-3)">retouche → {{ res.nextV }}</span>
+          <textarea value="{{ retouch }}" onChange="{{ onRetouch }}" placeholder="ajoute un panneau de réglages…" rows="3" style="resize:vertical;padding:9px 11px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--fg);font:400 13px/1.45 var(--mono);outline-color:var(--accent)"></textarea>
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ res.suggest }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.go }}" style="height:24px;padding:0 8px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--fg-2);font:400 11.5px/1 var(--mono);cursor:pointer" style-hover="color:var(--fg);border-color:var(--border-strong)">{{ s.label }}</button></sc-for></div>
+          <button onClick="{{ res.doRetouch }}" style="height:32px;border:1px solid var(--primary);border-radius:7px;background:var(--primary);color:var(--primary-fg);font:600 13px/1 var(--sans);cursor:pointer" style-hover="opacity:.88">Lancer la retouche</button>
+        </section>
+      </aside>
+    </div>
+    <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden">
+      <div style="display:flex;border-bottom:1px solid var(--border);padding:0 8px"><sc-for list="{{ res.tabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.go }}" style="height:42px;padding:0 12px;border:0;border-bottom:2px solid {{ t.bd }};margin-bottom:-1px;background:transparent;color:{{ t.fg }};font:500 13px/1 var(--mono);cursor:pointer">{{ t.label }}</button></sc-for></div>
+      <sc-if value="{{ res.tab.prompt }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:20px 22px;display:flex;flex-direction:column;gap:16px"><sc-for list="{{ res.prompts }}" as="p" hint-placeholder-count="1"><div><div style="font:500 12px/1 var(--mono);color:var(--fg-3)">{{ p.k }}</div><p style="margin:8px 0 0;max-width:80ch;font:400 14.5px/1.65 var(--mono);color:var(--fg);text-wrap:pretty">{{ p.v }}</p></div></sc-for></div>
+      </sc-if>
+      <sc-if value="{{ res.tab.code }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:220px minmax(0,1fr)">
+          <div style="padding:10px 8px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:2px"><sc-for list="{{ res.files }}" as="f" hint-placeholder-count="5"><div style="display:flex;justify-content:space-between;gap:8px;padding:6px 9px;border-radius:5px;background:{{ f.bg }};font:400 12.5px/1.2 var(--mono);color:{{ f.fg }}"><span>{{ f.name }}</span><span style="color:var(--ok)">{{ f.add }}</span></div></sc-for></div>
+          <div style="padding:12px 0;background:var(--bg);overflow-x:auto"><sc-for list="{{ res.code }}" as="l" hint-placeholder-count="12"><div style="display:grid;grid-template-columns:46px minmax(0,1fr);font:400 13px/1.7 var(--mono);white-space:pre"><span style="padding-right:14px;text-align:right;color:var(--fg-3)">{{ l.n }}</span><span><span style="color:var(--fg)">{{ l.code }}</span><span style="color:var(--fg-3)">{{ l.comment }}</span></span></div></sc-for></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ res.tab.journal }}" hint-placeholder-val="{{ true }}">
+        <div><sc-for list="{{ res.journal }}" as="j" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:60px 58px minmax(0,1fr);gap:14px;align-items:baseline;padding:10px 22px;border-bottom:1px solid var(--border)"><span style="font:400 12.5px/1 var(--mono);color:var(--fg-3)">{{ j.t }}</span><span style="justify-self:start;padding:3px 6px;border-radius:4px;background:{{ j.bg }};color:{{ j.fg }};font:600 10.5px/1 var(--mono);letter-spacing:.04em">{{ j.kind }}</span><span style="min-width:0"><span style="display:block;font:500 13.5px/1.4 var(--sans)">{{ j.title }}</span><span style="display:block;margin-top:2px;font:400 12.5px/1.4 var(--mono);color:var(--fg-2)">{{ j.detail }}</span></span></div></sc-for></div>
+      </sc-if>
+    </section>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.compare }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Comparer" style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <div><h1 style="margin:0;font:600 22px/1.2 var(--mono);letter-spacing:-.01em">{{ cmp.slug }}</h1><div style="margin-top:5px;font:400 13px/1.3 var(--mono);color:var(--fg-2)">{{ cmp.title }} · {{ cmp.n }} résultats côte à côte</div></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;padding:3px;border:1px solid var(--border);border-radius:8px;background:var(--surface)"><sc-for list="{{ cmp.presets }}" as="p" hint-placeholder-count="2"><button onClick="{{ p.go }}" style="height:26px;padding:0 10px;border:0;border-radius:5px;background:{{ p.bg }};color:{{ p.fg }};font:500 12.5px/1 var(--mono);cursor:pointer">{{ p.label }}</button></sc-for></div>
+        <button onClick="{{ cmp.toggleBlind }}" style="display:inline-flex;align-items:center;gap:9px;height:32px;padding:0 11px;border:1px solid {{ cmp.blindBd }};border-radius:7px;background:transparent;color:var(--fg);font:500 13px/1 var(--sans);cursor:pointer"><span style="position:relative;width:28px;height:16px;border-radius:8px;background:{{ cmp.swBg }}"><span style="position:absolute;top:2px;left:{{ cmp.swX }};width:12px;height:12px;border-radius:50%;background:#fff"></span></span>Mode aveugle</button>
+        <sc-if value="{{ cmp.canAdd }}" hint-placeholder-val="{{ true }}"><button onClick="{{ cmp.add }}" style="height:32px;padding:0 12px;border:1px solid var(--border-strong);border-radius:7px;background:transparent;color:var(--fg);font:500 13px/1 var(--sans);cursor:pointer" style-hover="background:var(--surface-2)">+ Ajouter</button></sc-if>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ cmp.benchChips }}" as="c" hint-placeholder-count="10"><button onClick="{{ c.go }}" style="height:26px;padding:0 9px;border:1px solid {{ c.bd }};border-radius:6px;background:{{ c.bg }};color:{{ c.fg }};font:400 12px/1 var(--mono);cursor:pointer">{{ c.label }}</button></sc-for></div>
+    <div style="display:grid;grid-template-columns:{{ cmp.cols }};gap:12px">
+      <sc-for list="{{ cmp.slots }}" as="s" hint-placeholder-count="3">
+        <section style="border:1px solid {{ s.bd }};border-radius:10px;background:var(--surface);overflow:hidden;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:11px 12px">
+            <div style="min-width:0"><div style="font:600 13.5px/1.25 var(--mono)">{{ s.label }}</div><div style="margin-top:3px;font:400 12px/1.2 var(--mono);color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.sub }}</div></div>
+            <sc-if value="{{ s.canRemove }}" hint-placeholder-val="{{ true }}"><button onClick="{{ s.remove }}" title="Retirer" style="width:24px;height:24px;flex:none;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--fg-2);font:400 14px/1 var(--sans);cursor:pointer" style-hover="color:var(--fg)">×</button></sc-if>
+          </div>
+          <div style="position:relative;aspect-ratio:4/3;background:#030304;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+            <sc-if value="{{ s.isBH }}" hint-placeholder-val="{{ true }}"><canvas data-bh="1" data-spin="{{ s.p.spin }}" data-tilt="{{ s.p.tilt }}" data-glow="{{ s.p.glow }}" data-n="{{ s.p.n }}" data-pal="{{ s.p.pal }}" data-lens="{{ s.p.lens }}" data-stars="{{ s.p.stars }}" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas></sc-if>
+            <sc-if value="{{ s.isThumb }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;background:{{ s.thumb }}"></div></sc-if>
+            <sc-if value="{{ s.isFail }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;display:grid;place-items:center;background:#0b0b0c;color:#fafafa;font:600 13px/1.3 var(--mono)">{{ s.st.g }} {{ s.st.label }}</div></sc-if>
+            <span style="position:absolute;left:8px;top:8px;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.72);color:#fafafa;font:600 11.5px/1 var(--mono)">{{ s.letter }}</span>
+          </div>
+          <div style="padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span style="display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:5px;border:1px {{ s.st.bs }} {{ s.st.bd }};background:{{ s.st.bg }};color:{{ s.st.fg }};font:500 11.5px/1 var(--mono);white-space:nowrap"><span>{{ s.st.g }}</span>{{ s.st.label }}</span>
+            <button onClick="{{ s.prefer }}" style="height:28px;padding:0 10px;border:1px solid {{ s.prefBd }};border-radius:6px;background:{{ s.prefBg }};color:{{ s.prefFg }};font:600 12.5px/1 var(--sans);cursor:pointer">{{ s.preferTxt }}</button>
+          </div>
+        </section>
+      </sc-for>
+    </div>
+    <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden">
+      <sc-for list="{{ cmp.rows }}" as="r" hint-placeholder-count="7">
+        <div style="display:grid;grid-template-columns:{{ cmp.mcols }};gap:12px;align-items:center;min-height:42px;padding:0 12px;border-bottom:1px solid var(--border)">
+          <span style="font:400 12.5px/1 var(--mono);color:var(--fg-3)">{{ r.k }}</span>
+          <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="3"><span style="display:flex;align-items:center;gap:8px;font:{{ c.w }} 13.5px/1 var(--mono);color:{{ c.fg }}">{{ c.txt }}<sc-if value="{{ c.best }}" hint-placeholder-val="{{ false }}"><span style="padding:3px 5px;border-radius:4px;background:var(--accent-soft);color:var(--accent-text);font:600 10px/1 var(--mono);letter-spacing:.04em">BEST</span></sc-if></span></sc-for>
+        </div>
+      </sc-for>
+    </section>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.launch }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Lancer un run" style="display:flex;flex-direction:column;gap:16px">
+    <div><h1 style="margin:0;font:600 22px/1.2 var(--sans);letter-spacing:-.015em">Lancer un run</h1><div style="margin-top:4px;font:400 13px/1.3 var(--mono);color:var(--fg-2)">un modèle × une sélection de benchs · 30 min max par projet</div></div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface)">
+          <div style="display:flex;align-items:center;gap:10px;height:46px;padding:0 16px;border-bottom:1px solid var(--border)"><span style="font:500 12px/1 var(--mono);color:var(--fg-3)">01</span><h2 style="margin:0;font:600 14px/1 var(--sans)">Modèle</h2></div>
+          <div style="padding:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+            <sc-for list="{{ launch.models }}" as="m" hint-placeholder-count="6">
+              <button onClick="{{ m.pick }}" style="display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;gap:11px;padding:11px 12px;border:1px solid {{ m.bd }};border-radius:8px;background:{{ m.bg }};color:var(--fg);text-align:left;cursor:pointer" style-hover="border-color:var(--border-strong)">
+                <span style="width:16px;height:16px;border-radius:50%;border:1.5px solid {{ m.ring }};display:grid;place-items:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ m.dot }}"></span></span>
+                <span style="min-width:0"><span style="display:block;font:500 13px/1.25 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.slug }}</span><span style="display:block;margin-top:3px;font:400 11.5px/1.2 var(--sans);color:var(--fg-3)">via {{ m.tool }}</span></span>
+                <span style="text-align:right"><span style="display:block;font:600 14px/1 var(--mono)">{{ m.score }}</span><span style="display:block;margin-top:4px;font:400 11px/1 var(--mono);color:var(--fg-3)">{{ m.cost }}</span></span>
+              </button>
+            </sc-for>
+          </div>
+        </section>
+        <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;height:46px;padding:0 16px;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px"><span style="font:500 12px/1 var(--mono);color:var(--fg-3)">02</span><h2 style="margin:0;font:600 14px/1 var(--sans)">Benchs</h2></div>
+            <div style="display:flex;gap:4px"><button onClick="{{ launch.all }}" style="height:26px;padding:0 9px;border:0;border-radius:5px;background:transparent;color:var(--fg-2);font:500 12.5px/1 var(--sans);cursor:pointer" style-hover="background:var(--surface-2);color:var(--fg)">Tout</button><button onClick="{{ launch.none }}" style="height:26px;padding:0 9px;border:0;border-radius:5px;background:transparent;color:var(--fg-2);font:500 12.5px/1 var(--sans);cursor:pointer" style-hover="background:var(--surface-2);color:var(--fg)">Aucun</button></div>
+          </div>
+          <div style="padding:12px 12px 0;display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ launch.cats }}" as="c" hint-placeholder-count="5"><button onClick="{{ c.toggle }}" style="display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 10px;border:1px solid {{ c.bd }};border-radius:6px;background:{{ c.bg }};color:{{ c.fg }};font:500 12.5px/1 var(--mono);cursor:pointer">{{ c.label }}<span style="opacity:.75">{{ c.count }}</span></button></sc-for></div>
+          <div style="padding:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px">
+            <sc-for list="{{ launch.benches }}" as="b" hint-placeholder-count="10">
+              <button onClick="{{ b.toggle }}" style="display:grid;grid-template-columns:16px 52px minmax(0,1fr) auto;align-items:center;gap:11px;padding:7px 11px 7px 10px;border:1px solid {{ b.bd }};border-radius:8px;background:{{ b.bg }};color:var(--fg);text-align:left;cursor:pointer" style-hover="border-color:var(--border-strong)">
+                <span style="width:16px;height:16px;border-radius:4px;border:1.5px solid {{ b.boxBd }};background:{{ b.box }};display:grid;place-items:center;color:#fff;font:700 11px/1 var(--sans)">{{ b.check }}</span>
+                <span style="width:52px;height:32px;border-radius:4px;background:{{ b.thumb }}"></span>
+                <span style="min-width:0"><span style="display:block;font:500 13px/1.25 var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.slug }}</span><span style="display:block;margin-top:3px;font:400 11.5px/1.2 var(--sans);color:var(--fg-3)">{{ b.meta }}</span></span>
+                <span style="font:400 11.5px/1 var(--mono);color:var(--fg-3)">{{ b.est }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+      <aside style="position:sticky;top:76px;border:1px solid var(--border);border-radius:10px;background:var(--surface)">
+        <div style="height:46px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border)"><h2 style="margin:0;font:600 14px/1 var(--sans)">Récapitulatif</h2></div>
+        <div style="padding:4px 16px"><sc-for list="{{ launch.summary }}" as="s" hint-placeholder-count="6"><div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="font:400 12.5px/1.3 var(--mono);color:var(--fg-3)">{{ s.k }}</span><span style="font:500 13px/1.3 var(--mono);text-align:right">{{ s.v }}</span></div></sc-for></div>
+        <div style="padding:8px 16px 16px;display:flex;flex-direction:column;gap:8px">
+          <button onClick="{{ launch.go }}" disabled="{{ launch.cant }}" style="height:38px;border:1px solid var(--primary);border-radius:7px;background:var(--primary);color:var(--primary-fg);font:600 14px/1 var(--sans);cursor:pointer;opacity:{{ launch.btnOp }}" style-hover="opacity:.88">{{ launch.btnLabel }}</button>
+          <button onClick="{{ launch.cancel }}" style="height:34px;border:1px solid var(--border-strong);border-radius:7px;background:transparent;color:var(--fg);font:500 13px/1 var(--sans);cursor:pointer" style-hover="background:var(--surface-2)">Annuler</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ is.tokens }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Tokens" style="display:flex;flex-direction:column;gap:16px">
+    <div><h1 style="margin:0;font:600 22px/1.2 var(--sans);letter-spacing:-.015em">Tokens</h1><div style="margin-top:4px;font:400 13px/1.3 var(--mono);color:var(--fg-2)">shadcn/ui · Tailwind 4 · Inter + JetBrains Mono · AA dans les deux thèmes</div></div>
+    <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow-x:auto">
+      <div style="min-width:860px">
+        <div style="display:grid;grid-template-columns:minmax(150px,1fr) minmax(190px,1fr) 160px 160px minmax(180px,1.3fr);gap:14px;align-items:center;height:38px;padding:0 16px;border-bottom:1px solid var(--border);font:500 11.5px/1 var(--mono);color:var(--fg-3)"><span>rôle</span><span>variable</span><span>dark</span><span>light</span><span>usage</span></div>
+        <sc-for list="{{ tokens }}" as="t" hint-placeholder-count="12">
+          <div style="display:grid;grid-template-columns:minmax(150px,1fr) minmax(190px,1fr) 160px 160px minmax(180px,1.3fr);gap:14px;align-items:center;min-height:44px;padding:5px 16px;border-bottom:1px solid var(--border)">
+            <span style="font:500 13px/1.3 var(--sans)">{{ t.role }}</span>
+            <span style="font:400 12.5px/1.3 var(--mono);color:var(--fg-2)">{{ t.v }}</span>
+            <span style="display:flex;align-items:center;gap:9px"><span style="width:22px;height:22px;border-radius:4px;background:{{ t.dark }};border:1px solid rgba(128,128,128,.35)"></span><span style="font:400 12.5px/1 var(--mono)">{{ t.dark }}</span></span>
+            <span style="display:flex;align-items:center;gap:9px"><span style="width:22px;height:22px;border-radius:4px;background:{{ t.light }};border:1px solid rgba(128,128,128,.35)"></span><span style="font:400 12.5px/1 var(--mono)">{{ t.light }}</span></span>
+            <span style="font:400 12.5px/1.4 var(--sans);color:var(--fg-2)">{{ t.use }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+    <section style="border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden">
+      <div style="height:42px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border);font:500 13px/1 var(--mono)">globals.css</div>
+      <pre style="margin:0;padding:16px 18px;background:var(--bg);font:400 12.5px/1.65 var(--mono);color:var(--fg);overflow:auto;max-height:420px">{{ cssExport }}</pre>
+    </section>
+  </div>
+  </sc-if>
+</div>
+
+<sc-if value="{{ pal.open }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closePal }}" style="position:fixed;inset:0;z-index:60;background:var(--scrim)"></div>
+  <div style="position:fixed;z-index:61;top:14vh;left:50%;transform:translateX(-50%);width:min(620px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--border-strong);border-radius:12px;box-shadow:var(--shadow);overflow:hidden">
+    <div style="display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--border)">
+      <span style="font:500 12px/1 var(--mono);color:var(--fg-3)">›</span>
+      <input ref="{{ palRef }}" value="{{ pal.q }}" onChange="{{ onQ }}" onKeyDown="{{ onPalKey }}" placeholder="modèle, run, bench, action…" style="flex:1;height:50px;border:0;background:transparent;color:var(--fg);font:400 15px/1 var(--mono);outline:none">
+      <span style="padding:3px 6px;border:1px solid var(--border);border-radius:4px;font:500 11px/1 var(--mono);color:var(--fg-3)">esc</span>
+    </div>
+    <div style="max-height:420px;overflow:auto;padding:5px">
+      <sc-for list="{{ pal.items }}" as="p" hint-placeholder-count="6">
+        <sc-if value="{{ p.head }}" hint-placeholder-val="{{ false }}"><div style="padding:9px 9px 5px;font:500 11px/1 var(--mono);color:var(--fg-3)">{{ p.label }}</div></sc-if>
+        <sc-if value="{{ p.row }}" hint-placeholder-val="{{ true }}"><button onClick="{{ p.go }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 9px;border:0;border-radius:6px;background:{{ p.bg }};color:var(--fg);font:400 13.5px/1.3 var(--mono);text-align:left;cursor:pointer" style-hover="background:var(--surface-2)"><span>{{ p.label }}</span><span style="font:400 11.5px/1 var(--mono);color:var(--fg-3)">{{ p.sub }}</span></button></sc-if>
+      </sc-for>
+      <sc-if value="{{ pal.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:16px 9px;font:400 13px/1 var(--mono);color:var(--fg-3)">aucun résultat</div></sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;right:20px;bottom:20px;z-index:70;display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface);color:var(--fg);font:400 13px/1.3 var(--mono);box-shadow:var(--shadow)"><span style="width:7px;height:7px;border-radius:50%;background:var(--accent)"></span>{{ toast }}</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;},&quot;cardLead&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;score&quot;,&quot;statut&quot;],&quot;default&quot;:&quot;score&quot;,&quot;tsType&quot;:&quot;'score'|'statut'&quot;,&quot;section&quot;:&quot;Cartes&quot;},&quot;simSpeed&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;min&quot;:1,&quot;max&quot;:60,&quot;step&quot;:1,&quot;default&quot;:20,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Simulation live&quot;}}">
+class Component extends DCLogic {
+  D = (() => {
+    const M = [
+      { id: 'opus', slug: 'anthropic/opus-5.5', name: 'Opus 5.5', prov: 'Anthropic', tool: 'Claude Code', ab: 'AN', cost: 2.05, min: 11 },
+      { id: 'gpt', slug: 'openai/gpt-5.2-codex', name: 'GPT-5.2 Codex', prov: 'OpenAI', tool: 'Codex CLI', ab: 'OA', cost: 1.62, min: 14 },
+      { id: 'gem', slug: 'google/gemini-3-pro', name: 'Gemini 3 Pro', prov: 'Google', tool: 'Gemini CLI', ab: 'GO', cost: 1.18, min: 9 },
+      { id: 'kimi', slug: 'moonshot/kimi-k3', name: 'Kimi K3', prov: 'Moonshot', tool: 'OpenCode', ab: 'MS', cost: 0.41, min: 16 },
+      { id: 'glm', slug: 'zhipu/glm-5', name: 'GLM-5', prov: 'Zhipu', tool: 'OpenCode', ab: 'ZP', cost: 0.33, min: 18 },
+      { id: 'qwen', slug: 'qwen/qwen-4-coder', name: 'Qwen 4 Coder', prov: 'Alibaba', tool: 'Qwen Code', ab: 'QW', cost: 0.22, min: 21 },
+    ];
+    const CATS = ['3D', 'Simulation', 'Frontend', 'Jeu', 'Code agentique'];
+    const B = [
+      { id: 'bh', slug: '3d/black-hole', title: 'Trou noir et disque d’accrétion', cat: '3D', diff: 'avancé', best: [92, 84, 79, 71, 64, null],
+        thumb: 'radial-gradient(circle at 50% 50%, #000 0 13%, #fff3df 14.5%, #f39a55 17%, rgba(150,50,15,.55) 26%, transparent 42%), radial-gradient(ellipse 48% 9% at 50% 52%, rgba(255,190,120,.95), rgba(200,80,30,.4) 60%, transparent 75%), #040405',
+        prompt: 'Crée une scène 3D temps réel d’un trou noir de Schwarzschild entouré d’un disque d’accrétion, rendue dans le navigateur avec three.js : lentille gravitationnelle, effet Doppler sur le disque, fond étoilé. 60 images/s sur un portable récent. Livre un projet Vite qui démarre avec npm run dev.' },
+      { id: 'solar', slug: '3d/solar-system', title: 'Système solaire interactif', cat: '3D', diff: 'intermédiaire', best: [88, 80, 83, 74, 70, 66],
+        thumb: 'radial-gradient(circle at 50% 50%, #ffd36b 0 5%, rgba(255,180,60,.35) 8%, transparent 11%), radial-gradient(circle at 71% 40%, #6aa9ff 0 1.8%, transparent 2.3%), radial-gradient(circle at 31% 62%, #e0845a 0 1.4%, transparent 1.9%), radial-gradient(circle at 58% 76%, #d9c7a0 0 2.4%, transparent 2.9%), radial-gradient(circle at 50% 50%, transparent 0 20%, rgba(255,255,255,.2) 20.3%, transparent 20.8%, transparent 33%, rgba(255,255,255,.14) 33.3%, transparent 33.8%), #07080d',
+        prompt: 'Modélise le système solaire en 3D avec des orbites à l’échelle logarithmique, une caméra orbitale et des étiquettes cliquables.' },
+      { id: 'fluid', slug: 'sim/gpu-fluids', title: 'Simulation de fluides GPU', cat: 'Simulation', diff: 'avancé', best: [84, null, 76, null, 58, null],
+        thumb: 'radial-gradient(ellipse at 28% 40%, #1fb6c9 0, transparent 45%), radial-gradient(ellipse at 72% 64%, #3b4fd8 0, transparent 50%), radial-gradient(ellipse at 55% 30%, #e9f7ff 0, transparent 18%), radial-gradient(ellipse at 40% 75%, #e0457b 0, transparent 30%), #041018',
+        prompt: 'Simule un fluide 2D (stable fluids) sur GPU. La souris injecte de la couleur et de la vitesse.' },
+      { id: 'boids', slug: 'sim/boids', title: 'Nuée d’oiseaux (boids)', cat: 'Simulation', diff: 'intermédiaire', best: [86, 77, 81, 72, 69, 63],
+        thumb: 'radial-gradient(ellipse 22% 12% at 60% 42%, rgba(20,20,30,.9), transparent 70%), radial-gradient(ellipse 12% 7% at 42% 52%, rgba(20,20,30,.75), transparent 70%), linear-gradient(170deg, #f7b267 0%, #f4845f 45%, #6d597a 100%)',
+        prompt: 'Simule une nuée de 2 000 oiseaux avec cohésion, alignement, séparation et un prédateur.' },
+      { id: 'landing', slug: 'front/saas-landing', title: 'Landing page SaaS', cat: 'Frontend', diff: 'débutant', best: [90, 88, 85, 80, 78, 74],
+        thumb: 'linear-gradient(#f5f5f5 0 0) 10% 26%/38% 7% no-repeat, linear-gradient(#8a8a8a 0 0) 10% 40%/48% 3% no-repeat, linear-gradient(#8a8a8a 0 0) 10% 48%/40% 3% no-repeat, linear-gradient(#7c5cff 0 0) 10% 64%/16% 9% no-repeat, linear-gradient(135deg, #2d2d35, #3a3a48) 90% 50%/34% 58% no-repeat, #141417',
+        prompt: 'Construis la landing page d’un outil SaaS de facturation : hero, fonctionnalités, tarifs, FAQ. Responsive, sans framework CSS.' },
+      { id: 'dash', slug: 'front/analytics-dashboard', title: 'Dashboard analytics', cat: 'Frontend', diff: 'intermédiaire', best: [87, 82, 78, 70, 66, 61],
+        thumb: 'linear-gradient(#7c5cff 0 0) 10% 82%/6% 34% no-repeat, linear-gradient(#7c5cff 0 0) 19% 82%/6% 50% no-repeat, linear-gradient(#7c5cff 0 0) 28% 82%/6% 26% no-repeat, linear-gradient(#22c55e 0 0) 37% 82%/6% 58% no-repeat, linear-gradient(#e4e4ee 0 0) 84% 26%/30% 26% no-repeat, linear-gradient(#e4e4ee 0 0) 84% 74%/30% 32% no-repeat, linear-gradient(#1f1f2e 0 0) 0 0/100% 12% no-repeat, #f7f7fb',
+        prompt: 'Construis un dashboard analytics avec filtre de dates, quatre graphiques et un tableau paginé, sur des données JSON fournies.' },
+      { id: 'tetris', slug: 'game/tetris', title: 'Tetris', cat: 'Jeu', diff: 'débutant', best: [91, 90, 86, 83, 79, 75],
+        thumb: 'linear-gradient(#00c2ff 0 0) 36% 92%/24% 9% no-repeat, linear-gradient(#ffcc00 0 0) 60% 92%/12% 18% no-repeat, linear-gradient(#ff3d7f 0 0) 72% 83%/12% 27% no-repeat, linear-gradient(#7dff5a 0 0) 46% 28%/18% 9% no-repeat, linear-gradient(#7dff5a 0 0) 52% 37%/9% 9% no-repeat, linear-gradient(#1a1a33 0 0) 50% 50%/46% 100% no-repeat, #0b0b1a',
+        prompt: 'Code un Tetris jouable au clavier : rotation SRS, réserve, prévisualisation, score et niveaux.' },
+      { id: 'platformer', slug: 'game/platformer-2d', title: 'Jeu de plateforme 2D', cat: 'Jeu', diff: 'avancé', best: [79, null, 71, 62, null, null],
+        thumb: 'linear-gradient(#3fa34d 0 0) 0 100%/100% 14% no-repeat, linear-gradient(#8b5a2b 0 0) 62% 66%/24% 5% no-repeat, linear-gradient(#8b5a2b 0 0) 88% 44%/16% 5% no-repeat, linear-gradient(#ff4d4d 0 0) 24% 80%/5% 10% no-repeat, linear-gradient(#ffd23f 0 0) 66% 56%/3% 5% no-repeat, linear-gradient(#8fd3ff, #e3f5ff)',
+        prompt: 'Code un jeu de plateforme 2D avec trois niveaux, des ennemis, des collisions et un éditeur de niveau.' },
+      { id: 'api', slug: 'agent/booking-api', title: 'API REST de réservation', cat: 'Code agentique', diff: 'intermédiaire', best: [85, null, 80, 76, 71, 68],
+        thumb: 'linear-gradient(#3fb950 0 0) 8% 20%/30% 4% no-repeat, linear-gradient(#8b949e 0 0) 8% 34%/52% 4% no-repeat, linear-gradient(#8b949e 0 0) 8% 48%/44% 4% no-repeat, linear-gradient(#d29922 0 0) 8% 62%/36% 4% no-repeat, linear-gradient(#58a6ff 0 0) 8% 76%/22% 4% no-repeat, #0d1117',
+        prompt: 'Écris une API REST de réservation (Node et SQLite) avec authentification, disponibilités et tests d’intégration.' },
+      { id: 'migration', slug: 'agent/mongo-to-pg', title: 'Migration MongoDB → PostgreSQL', cat: 'Code agentique', diff: 'avancé', best: [81, 74, 72, null, 60, 55],
+        thumb: 'linear-gradient(#58a6ff 0 0) 8% 20%/40% 4% no-repeat, linear-gradient(#8b949e 0 0) 8% 34%/60% 4% no-repeat, linear-gradient(#f85149 0 0) 8% 48%/25% 4% no-repeat, linear-gradient(#3fb950 0 0) 8% 62%/45% 4% no-repeat, linear-gradient(#3fb950 0 0) 8% 76%/32% 4% no-repeat, #0d1117',
+        prompt: 'Migre ce projet de MongoDB vers PostgreSQL sans perte de données, avec un script réversible et des tests.' },
+    ];
+    const RUNS = [
+      { id: 'r-0923a', model: 'opus', date: '23/09/2026', start: '08:12' },
+      { id: 'r-0921', model: 'gem', date: '21/09/2026', start: '14:30' },
+      { id: 'r-0919', model: 'kimi', date: '19/09/2026', start: '09:05' },
+      { id: 'r-0917', model: 'glm', date: '17/09/2026', start: '16:40' },
+      { id: 'r-0915', model: 'qwen', date: '15/09/2026', start: '11:20' },
+      { id: 'r-0912', model: 'opus', date: '12/09/2026', start: '10:00', older: true },
+      { id: 'r-0910', model: 'gpt', date: '10/09/2026', start: '15:15', older: true },
+    ];
+    const ST = {
+      pending: { label: 'en attente', fg: 'var(--fg-3)', bg: 'transparent', bd: 'var(--border-strong)', bs: 'dashed', g: '○' },
+      running: { label: 'en cours', fg: 'var(--accent-text)', bg: 'var(--accent-soft)', bd: 'transparent', bs: 'solid', g: '' },
+      done: { label: 'livré', fg: 'var(--ok)', bg: 'var(--ok-soft)', bd: 'transparent', bs: 'solid', g: '✓' },
+      nostart: { label: 'ne démarre pas', fg: 'var(--err)', bg: 'transparent', bd: 'var(--err)', bs: 'solid', g: '▲' },
+      error: { label: 'erreur', fg: 'var(--err)', bg: 'var(--err-soft)', bd: 'transparent', bs: 'solid', g: '✕' },
+      timeout: { label: 'timeout', fg: 'var(--warn)', bg: 'var(--warn-soft)', bd: 'transparent', bs: 'solid', g: '◷' },
+      stopped: { label: 'arrêté', fg: 'var(--idle)', bg: 'var(--idle-soft)', bd: 'transparent', bs: 'solid', g: '■' },
+    };
+    const SEG = { pending: 'var(--surface-2)', running: 'var(--accent)', done: 'var(--ok)', nostart: 'var(--err)', error: 'var(--err)', timeout: 'var(--warn)', stopped: 'var(--fg-3)' };
+    const PAL = [
+      { hot: [255, 238, 214], cold: [226, 104, 44] },
+      { hot: [232, 242, 255], cold: [70, 110, 235] },
+      { hot: [255, 246, 205], cold: [205, 150, 35] },
+    ];
+    const STARS = Array.from({ length: 240 }, () => ({ x: Math.random(), y: Math.random(), s: Math.random() < 0.1 ? 2 : 1, a: 0.15 + Math.random() * 0.6 }));
+    const PARTS = Array.from({ length: 1800 }, () => ({ r: 1.55 + Math.pow(Math.random(), 1.6) * 2.9, a: Math.random() * Math.PI * 2, s: Math.random() < 0.15 ? 2.2 : 1.3 }));
+    const O = (b, score, f, v, e, cost, min, x) => Object.assign({ b, status: 'done', score, f, v, e, cost, dur: min * 60 }, x || {});
+    const OPUS = [
+      O('bh', 84, 88, 80, 83, 2.07, 23, { v2: { score: 92, f: 94, v: 93, e: 88, cost: 1.03, dur: 360 } }),
+      O('solar', 88, 90, 89, 85, 1.84, 9), O('fluid', 84, 86, 85, 80, 2.61, 14), O('boids', 86, 88, 86, 84, 1.52, 8),
+      O('landing', 90, 92, 91, 87, 1.21, 6), O('dash', 87, 89, 86, 86, 2.30, 12), O('tetris', 91, 95, 88, 90, 1.10, 5),
+      O('platformer', 79, 80, 82, 75, 3.02, 15), O('api', 85, 88, 78, 89, 2.44, 8), O('migration', null, null, null, null, 2.34, 6),
+    ];
+    const TOK = [
+      ['Fond', '--background', '#09090b', '#fafafa', 'Fond de l’application'],
+      ['Surface', '--card', '#111113', '#ffffff', 'Cartes, panneaux, tableaux'],
+      ['Surface creuse', '--muted', '#1a1a1d', '#f4f4f5', 'Survol, pistes de barres'],
+      ['Bordure', '--border', '#232326', '#e4e4e7', 'Filets, séparateurs'],
+      ['Bordure forte', '--input', '#3f3f46', '#d4d4d8', 'Champs, boutons secondaires'],
+      ['Texte', '--foreground', '#fafafa', '#09090b', 'Texte principal, chiffres'],
+      ['Texte secondaire', '--muted-foreground', '#a1a1aa', '#52525b', 'Métadonnées'],
+      ['Texte tertiaire', '--subtle-foreground', '#8b8b94', '#6b6b73', 'Libellés, en-têtes de colonnes'],
+      ['Primaire', '--primary', '#fafafa', '#09090b', 'Bouton d’action principal'],
+      ['Sur primaire', '--primary-foreground', '#09090b', '#fafafa', 'Libellé du bouton principal'],
+      ['Actif', '--ring', '#3b82f6', '#2563eb', 'En cours, barres, focus'],
+      ['Actif en texte', '--active-foreground', '#60a5fa', '#1d4ed8', 'Chrono, onglet actif (AA)'],
+      ['Actif doux', '--accent', '#0f1b2e', '#eff4ff', 'Fond « en cours », filtre actif'],
+      ['Livré', '--success', '#4ade80', '#15803d', 'État livré'],
+      ['Livré doux', '--success-soft', '#0d2016', '#ecfdf3', 'Fond badge livré'],
+      ['Timeout', '--warning', '#fbbf24', '#a16207', 'État timeout'],
+      ['Timeout doux', '--warning-soft', '#271d07', '#fef7e0', 'Fond badge timeout'],
+      ['Erreur', '--destructive', '#f87171', '#b91c1c', 'Erreur, ne démarre pas (contour)'],
+      ['Erreur doux', '--destructive-soft', '#2a1111', '#fef1f1', 'Fond badge erreur'],
+      ['Arrêté', '--stopped', '#a1a1aa', '#52525b', 'État arrêté'],
+    ];
+    const LENS = [
+      'uniform float uSpin;        // v2 : exposé au panneau', 'uniform float uTilt;', 'uniform sampler2D uStars;', 'varying vec2 vUv;', '',
+      'const float RS = 1.0;       // rayon de Schwarzschild', '', 'vec3 bend(vec3 dir, vec3 pos) {', '  float r = length(pos);',
+      '  float k = 1.5 * RS / (r * r);', '  return normalize(dir - k * pos / r);', '}', '', 'void main() {',
+      '  vec3 ro = vec3(0.0, uTilt * 4.0, -12.0);', '  vec3 rd = normalize(vec3(vUv * 2.0 - 1.0, 1.6));', '  vec3 col = vec3(0.0);',
+      '  for (int i = 0; i < 180; i++) {', '    float r = length(ro);', '    if (r < RS * 1.001) break;  // horizon : fix du NaN',
+      '    col += disk(ro, uSpin) * 0.04;', '    rd = bend(rd, ro);', '    ro += rd * 0.08 * r;', '  }', '  gl_FragColor = vec4(tonemap(col), 1.0);', '}',
+    ];
+    const J1 = [
+      ['00:00', 'READ', 'Lecture du prompt', 'prompt.md'], ['00:41', 'BASH', 'Création du projet', 'npm create vite@latest blackhole -- --template vanilla'],
+      ['01:58', 'BASH', 'Installation de three.js', 'npm i three@0.180'], ['02:15', 'EDIT', 'Shader de lentille gravitationnelle', 'src/shaders/lens.frag  +148'],
+      ['06:30', 'TEST', 'Premier rendu : disque trop plat', 'capture 1280×720 · 58 fps'], ['09:12', 'EDIT', 'Ajout du Doppler beaming', 'src/shaders/disk.frag  +62 −9'],
+      ['14:40', 'FIX', 'NaN au bord de l’horizon', 'if (r < RS * 1.001) break;'], ['19:05', 'TEST', 'Tests 12/12', 'npm test'], ['22:48', 'DONE', 'Livraison', 'npm run dev → localhost:5173'],
+    ];
+    const J2 = [
+      ['00:00', 'READ', 'Retouche : « ajoute un panneau de réglages »', 'base v1 · 4 fichiers lus'], ['00:52', 'EDIT', 'Panneau de réglages', 'src/ui/panel.js  +74'],
+      ['02:40', 'EDIT', 'Uniforms exposés au panneau', 'src/main.js  +21 −4'], ['04:10', 'TEST', 'Tests 12/12', 'npm test'], ['05:58', 'DONE', 'Livraison v2', 'localhost:5173'],
+    ];
+    return { M, CATS, B, RUNS, ST, SEG, PAL, STARS, PARTS, OPUS, TOK, LENS, J1, J2 };
+  })();
+
+  palRef = React.createRef();
+  stageRef = React.createRef();
+  _cache = {};
+
+  state = {
+    screen: 'home', theme: null, runId: 'live', res: { run: 'r-0923a', b: 'bh' }, ver: 'v2', tab: 'journal',
+    demo: { spin: 1, tilt: 0.28, glow: 1.1, stars: true },
+    cmp: { b: 'bh', slots: [{ run: 'r-0923a', v: 'v2' }, { run: 'live', v: 'v1' }, { run: 'r-0921', v: 'v1' }] }, blind: false, vote: -1,
+    lbCat: 'all', lbSort: 'score', benchCat: 'all', benchQ: '', launchModel: 'opus', sel: { bh: 1, solar: 1, fluid: 1, boids: 1 },
+    pal: false, q: '', crumb: -1, toast: '', retouch: '', live: this.initLive(),
+  };
+
+  initLive() {
+    const o = (b, status, score, cost, min) => ({ b, status, score, cost, dur: min * 60 });
+    return { model: 'gpt', date: '23/09/2026', start: '10:02', stopped: false, items: [
+      o('bh', 'done', 84, 1.92, 18), o('solar', 'done', 80, 1.41, 11), o('fluid', 'nostart', null, 2.2, 21), o('boids', 'done', 77, 1.05, 9), o('landing', 'done', 88, 0.84, 7),
+      { b: 'dash', status: 'running', el: 432, out: { status: 'done', score: 82, cost: 1.28, dur: 580 } },
+      { b: 'tetris', status: 'pending', out: { status: 'done', score: 90, cost: 0.76, dur: 360 } },
+      { b: 'platformer', status: 'pending', out: { status: 'timeout', score: null, cost: 2.95, dur: 1800 } },
+      { b: 'api', status: 'pending', out: { status: 'error', score: null, cost: 1.12, dur: 540 } },
+      { b: 'migration', status: 'pending', out: { status: 'done', score: 74, cost: 1.4, dur: 780 } },
+    ] };
+  }
+
+  componentDidMount() {
+    this._t = setInterval(() => this.tick(), 1000);
+    this._key = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.state.pal ? this.setState({ pal: false }) : this.openPal(); }
+      else if (e.key === 'Escape') this.setState({ pal: false, crumb: -1 });
+    };
+    window.addEventListener('keydown', this._key);
+    const loop = (ts) => { this._raf = requestAnimationFrame(loop); document.querySelectorAll('canvas[data-bh]').forEach((cv) => this.drawBH(cv, ts / 1000)); };
+    this._raf = requestAnimationFrame(loop);
+  }
+  componentWillUnmount() { clearInterval(this._t); cancelAnimationFrame(this._raf); window.removeEventListener('keydown', this._key); clearTimeout(this._tt); }
+
+  drawBH(cv, t) {
+    const d = cv.dataset, W = cv.clientWidth, H = cv.clientHeight; if (!W || !H) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const spin = +d.spin || 0, tilt = +d.tilt || 0.28, glow = +d.glow || 1, n = +d.n || 1000, P = this.D.PAL[+d.pal || 0], lens = d.lens === '1', stars = d.stars !== '0';
+    const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.1, rgb = (c, a) => 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')';
+    ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = '#030304'; ctx.fillRect(0, 0, W, H);
+    if (stars) for (const s of this.D.STARS) { ctx.fillStyle = 'rgba(255,255,255,' + s.a + ')'; ctx.fillRect(s.x * W, s.y * H, s.s, s.s); }
+    const g = ctx.createRadialGradient(cx, cy, R, cx, cy, R * 6); g.addColorStop(0, rgb(P.cold, 0.22 * glow)); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+    const parts = (front) => {
+      for (let i = 0; i < n; i++) {
+        const q = this.D.PARTS[i], a = q.a + t * spin * 1.4 / Math.pow(q.r, 1.5), sa = Math.sin(a);
+        if ((sa > 0) !== front) continue;
+        const r = R * q.r, x = cx + Math.cos(a) * r, y = cy + sa * r * tilt, heat = Math.max(0, 1 - (q.r - 1.55) / 2.9);
+        const dop = 0.45 + 0.55 * (0.5 + 0.5 * Math.cos(a)), al = Math.min(1, (0.18 + 0.6 * heat) * dop * glow);
+        const c = [0, 1, 2].map((k) => (P.cold[k] + (P.hot[k] - P.cold[k]) * heat) | 0);
+        ctx.fillStyle = rgb(c, al); ctx.fillRect(x, y, q.s, q.s);
+      }
+    };
+    parts(false);
+    if (lens) { for (let k = 0; k < 3; k++) { ctx.strokeStyle = rgb(P.hot, (0.14 - 0.035 * k) * glow); ctx.lineWidth = R * (0.12 + k * 0.14); ctx.beginPath(); ctx.ellipse(cx, cy, R * 1.55, R * 1.35, 0, Math.PI, Math.PI * 2); ctx.stroke(); } }
+    ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+    ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = rgb(P.hot, 0.8 * glow); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, R * 1.04, 0, Math.PI * 2); ctx.stroke();
+    parts(true);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  tick() {
+    const sp = this.props.simSpeed ?? 20;
+    this.setState((s) => {
+      const L = s.live; if (L.stopped) return null;
+      const i = L.items.findIndex((x) => x.status === 'running'); if (i < 0) return null;
+      const items = L.items.slice(), cur = { ...items[i], el: items[i].el + sp };
+      if (cur.el >= cur.out.dur) {
+        const o = cur.out; items[i] = { b: cur.b, status: o.status, score: o.score, cost: o.cost, dur: o.dur };
+        const j = items.findIndex((x) => x.status === 'pending'); if (j >= 0) items[j] = { ...items[j], status: 'running', el: 0 };
+      } else items[i] = cur;
+      return { live: { ...L, items } };
+    });
+  }
+  stop() {
+    this.setState((s) => ({ live: { ...s.live, stopped: true, items: s.live.items.map((x) => x.status === 'running' ? { b: x.b, status: 'stopped', score: null, cost: x.el * x.out.cost / x.out.dur, dur: x.el } : x) } }));
+    this.toast('Run arrêté');
+  }
+  launch(mid, ids) {
+    const mi = this.D.M.findIndex((m) => m.id === mid), m = this.D.M[mi];
+    const items = ids.map((id, k) => {
+      const bi = this.D.B.findIndex((b) => b.id === id), s = this.D.B[bi].best[mi], dur = Math.round(m.min * 60 * (0.6 + ((bi * 53) % 80) / 100));
+      const out = s == null ? { status: ['error', 'timeout', 'nostart'][(bi + mi) % 3], score: null, cost: m.cost * 0.9, dur: 0 } : { status: 'done', score: s, cost: +(m.cost * (0.7 + ((bi * 37) % 60) / 100)).toFixed(2), dur };
+      if (out.status === 'timeout') out.dur = 1800; else if (!out.dur) out.dur = dur;
+      return k === 0 ? { b: id, status: 'running', el: 0, out } : { b: id, status: 'pending', out };
+    });
+    const now = new Date(), hh = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    this.setState({ live: { model: mid, date: '23/09/2026', start: hh, stopped: false, items } });
+    this.nav('run', { runId: 'live' }); this.toast('Run lancé · ' + ids.length + ' projets');
+  }
+
+  money(n) { return n.toFixed(2) + ' $'; }
+  dur(s) { s = Math.round(s); if (s >= 3600) { const h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60); return h + 'h' + String(m).padStart(2, '0'); } return Math.max(1, Math.round(s / 60)) + ' min'; }
+  clock(s) { s = Math.floor(s); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
+  model(id) { return this.D.M.find((m) => m.id === id); }
+  bench(id) { return this.D.B.find((b) => b.id === id); }
+  runs() { const L = this.state.live; return [{ id: 'live', label: 'r-0923b', model: L.model, date: L.date, start: L.start }, ...this.D.RUNS.map((r) => ({ ...r, label: r.id }))]; }
+  runMeta(id) { return this.runs().find((r) => r.id === id); }
+  latest(mid) { return this.runs().find((r) => r.model === mid); }
+  itemsOf(id) {
+    if (id === 'live') return this.state.live.items;
+    if (id === 'r-0923a') return this.D.OPUS;
+    if (!this._cache[id]) this._cache[id] = this.gen(this.runMeta(id));
+    return this._cache[id];
+  }
+  gen(run) {
+    const mi = this.D.M.findIndex((m) => m.id === run.model), m = this.D.M[mi];
+    return this.D.B.map((b, bi) => {
+      let s = b.best[mi]; if (s != null && run.older) s = Math.max(40, s - 4);
+      const cost = +(m.cost * (0.65 + ((bi * 37 + mi * 11) % 70) / 100)).toFixed(2), dur = Math.round(m.min * 60 * (0.6 + ((bi * 53 + mi * 7) % 90) / 100));
+      if (s == null) { const st = ['error', 'timeout', 'nostart'][(bi + mi) % 3]; return { b: b.id, status: st, score: null, cost, dur: st === 'timeout' ? 1800 : dur }; }
+      return { b: b.id, status: 'done', score: s, f: Math.min(100, s + 3), v: s - 2, e: s - 1, cost, dur };
+    });
+  }
+  costOf(x) { return x.status === 'running' ? x.el * x.out.cost / x.out.dur : x.status === 'pending' ? 0 : x.cost; }
+  durOf(x) { return x.status === 'running' ? x.el : x.status === 'pending' ? 0 : x.dur; }
+  sum(id) {
+    const its = this.itemsOf(id), fin = its.filter((x) => x.status !== 'pending' && x.status !== 'running'), done = its.filter((x) => x.status === 'done'), gr = done.filter((x) => x.score != null);
+    return { total: its.length, fin: fin.length, done: done.length, avg: gr.length ? Math.round(gr.reduce((a, x) => a + x.score, 0) / gr.length) : null,
+      cost: its.reduce((a, x) => a + this.costOf(x), 0), dur: its.reduce((a, x) => a + this.durOf(x), 0), running: its.find((x) => x.status === 'running'),
+      segs: its.map((x) => ({ bg: this.D.SEG[x.status], title: this.bench(x.b).slug.split('/')[1] })) };
+  }
+  bhParams(mid, v) {
+    const P = { opus: { spin: 1, tilt: 0.28, glow: 1.1, n: 1700, pal: 0, lens: 1, stars: 1 }, gpt: { spin: 1.2, tilt: 0.36, glow: 0.95, n: 1300, pal: 1, lens: 1, stars: 1 },
+      gem: { spin: 0.8, tilt: 0.18, glow: 1, n: 1100, pal: 2, lens: 0, stars: 1 }, kimi: { spin: 0.9, tilt: 0.3, glow: 0.75, n: 600, pal: 0, lens: 0, stars: 0 },
+      glm: { spin: 1.4, tilt: 0.25, glow: 0.7, n: 450, pal: 1, lens: 0, stars: 1 }, qwen: { spin: 1, tilt: 0.3, glow: 0.6, n: 350, pal: 2, lens: 0, stars: 0 } };
+    if (mid === 'opus' && v === 'v1') return { spin: 0.8, tilt: 0.22, glow: 0.85, n: 800, pal: 0, lens: 0, stars: 1 };
+    return P[mid];
+  }
+  nav(screen, extra) { this.setState(Object.assign({ screen, pal: false, crumb: -1, q: '' }, extra || {})); }
+  openRun(id) { this.nav('run', { runId: id }); }
+  openResult(run, b) { const it = this.itemsOf(run).find((x) => x.b === b); this.nav('result', { res: { run, b }, ver: it && it.v2 ? 'v2' : 'v1', retouch: '' }); }
+  openPal() { this.setState({ pal: true, q: '', crumb: -1 }, () => setTimeout(() => this.palRef.current && this.palRef.current.focus(), 30)); }
+  toast(msg) { this.setState({ toast: msg }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  presetModels() { return [{ run: 'r-0923a', v: 'v2' }, { run: this.latest('gpt').id, v: 'v1' }, { run: 'r-0921', v: 'v1' }]; }
+  chip(active) { return { bg: active ? 'var(--accent-soft)' : 'var(--surface)', fg: active ? 'var(--accent-text)' : 'var(--fg-2)', bd: active ? 'var(--accent)' : 'var(--border)' }; }
+
+  lb(cat, sort) {
+    const D = this.D, bs = D.B.filter((b) => cat === 'all' || b.cat === cat);
+    const rows = D.M.map((m, mi) => { const sc = bs.map((b) => b.best[mi]).filter((v) => v != null); const avg = sc.length ? Math.round(sc.reduce((a, v) => a + v, 0) / sc.length) : 0; return { m, avg, rate: Math.round(sc.length / bs.length * 100) }; });
+    rows.sort((a, b) => sort === 'score' ? b.avg - a.avg : sort === 'prix' ? a.m.cost - b.m.cost : a.m.min - b.m.min);
+    return rows.map((r, i) => ({ rank: String(i + 1), rankFg: i === 0 ? 'var(--accent-text)' : 'var(--fg-3)', slug: r.m.slug, name: r.m.name, short: r.m.name, tool: r.m.tool, ab: r.m.ab,
+      score: String(r.avg), pct: r.avg + '%', rate: r.rate + '%', cost: this.money(r.m.cost), dur: r.m.min + ' min', ppd: Math.round(r.avg / r.m.cost) + '',
+      runs: String(this.runs().filter((x) => x.model === r.m.id).length), open: () => this.openRun(this.latest(r.m.id).id),
+      barBg: i === 0 ? 'var(--accent)' : 'var(--fg-3)', x: (r.m.cost / 3 * 100) + '%', y: (Math.max(0, r.avg - 50) / 50 * 100) + '%', dot: i === 0 ? 'var(--accent)' : 'var(--fg-2)' }));
+  }
+
+  rowOf(x, i, rid) {
+    const b = this.bench(x.b), running = x.status === 'running', pending = x.status === 'pending', cost = this.costOf(x);
+    const eff = x.v2 ? { ...x, ...x.v2 } : x, has = eff.score != null && x.status === 'done';
+    const f = eff.f ?? Math.min(100, (eff.score || 0) + 3), v = eff.v ?? (eff.score || 0) - 2, e = eff.e ?? (eff.score || 0) - 1;
+    return { n: String(i + 1).padStart(2, '0'), slug: b.slug, meta: b.title + ' · ' + b.diff, thumb: b.thumb, thumbOp: pending ? '.4' : '1', st: this.D.ST[x.status], isRunning: running, v2: !!x.v2,
+      hasScore: has, noScore: !has, scoreTxt: has ? String(eff.score) : x.status === 'done' ? 'non noté' : '—', fp: f + '%', vp: v + '%', ep: e + '%',
+      durTxt: running ? this.clock(x.el) : pending ? '—' : this.dur(x.dur), durFg: running ? 'var(--accent-text)' : 'var(--fg)', pct: running ? Math.min(100, x.el / 18) + '%' : '0%',
+      costTxt: pending ? '—' : this.money(cost), tokTxt: pending ? '—' : Math.round(cost * 190) + 'k', rowBg: running ? 'var(--accent-soft)' : 'transparent',
+      cantOpen: running || pending, openOp: running || pending ? '.35' : '1', open: () => { if (!running && !pending) this.openResult(rid, x.b); }, rerun: () => this.toast(b.slug + ' relancé') };
+  }
+
+  renderVals() {
+    const S = this.state, D = this.D, theme = S.theme || this.props.theme || 'dark', lead = (this.props.cardLead || 'score') === 'score', scr = S.screen;
+    const pulse = React.createElement('span', { style: { width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', flex: 'none', display: 'inline-block', animation: 'ckpulse 1.4s ease-in-out infinite' } });
+    const activeNav = scr === 'result' ? 'run' : scr;
+    const nav = [['home', 'Accueil'], ['benches', 'Benchs'], ['leaderboard', 'Classement'], ['run', 'Runs'], ['compare', 'Comparer']].map(([id, label]) => { const a = id === activeNav; return { label, bg: a ? 'var(--surface-2)' : 'transparent', fg: a ? 'var(--fg)' : 'var(--fg-2)', go: () => this.nav(id) }; });
+
+    const L = S.live, lm = this.model(L.model), ls = this.sum('live');
+    const live = { slug: lm.slug, slugShort: lm.slug.split('/')[1], tool: lm.tool, start: L.date + ' ' + L.start, running: !!ls.running, statusTxt: ls.running ? 'En direct' : L.stopped ? 'Run arrêté' : 'Run terminé',
+      progress: ls.fin + '/' + ls.total, cost: this.money(ls.cost), durTxt: this.dur(ls.dur), segs: ls.segs, curSlug: ls.running ? this.bench(ls.running.b).slug : '—',
+      el: ls.running ? this.clock(ls.running.el) : '--:--', elPct: ls.running ? Math.min(100, ls.running.el / 18) + '%' : '0%', open: () => this.openRun('live'), stop: () => this.stop() };
+
+    const all = this.runs().flatMap((r) => this.itemsOf(r.id)), fin = all.filter((x) => x.status !== 'pending' && x.status !== 'running'), dl = fin.filter((x) => x.status === 'done');
+    const kpis = [
+      { k: 'runs · sept.', v: String(this.runs().length), s: live.running ? '1 en cours' : 'aucun en cours' },
+      { k: 'taux de livraison', v: Math.round(dl.length / fin.length * 100) + '%', s: dl.length + ' / ' + fin.length + ' projets' },
+      { k: 'dépense', v: this.money(all.reduce((a, x) => a + this.costOf(x), 0)), s: 'tous modèles' },
+      { k: 'meilleur score', v: '92', s: 'opus-5.5 · black-hole v2' },
+    ].map((k, i) => ({ ...k, bl: i ? 'var(--border)' : 'transparent' }));
+    const card = (rid, x) => { const b = this.bench(x.b), m = this.model(this.runMeta(rid).model), e = x.v2 ? { ...x, ...x.v2 } : x, has = e.score != null && x.status === 'done';
+      return { slug: b.slug, model: m.slug, thumb: b.thumb, st: D.ST[x.status], v2: !!x.v2, big: lead && has, small: !lead && has, scoreTxt: has ? String(e.score) : '', meta: this.money(e.cost) + ' · ' + this.dur(e.dur), open: () => this.openResult(rid, x.b) }; };
+    const homeResults = [...L.items.filter((x) => x.status !== 'pending' && x.status !== 'running').slice(-3).reverse().map((x) => card('live', x)), ...['bh', 'tetris', 'landing'].map((b) => card('r-0923a', D.OPUS.find((x) => x.b === b)))];
+    const topModels = this.lb('all', 'score');
+
+    const q = S.benchQ.toLowerCase();
+    const benchCards = D.B.filter((b) => (S.benchCat === 'all' || b.cat === S.benchCat) && (!q || (b.title + b.slug).toLowerCase().includes(q))).map((b) => {
+      const tops = D.M.map((m, mi) => ({ name: m.slug.split('/')[1], s: b.best[mi] })).filter((x) => x.s != null).sort((a, c) => c.s - a.s);
+      return { slug: b.slug, title: b.title, cat: b.cat, diff: b.diff, thumb: b.thumb, runs: tops.length + '/6 livrés',
+        tops: tops.slice(0, 3).map((t, i) => ({ name: t.name, s: String(t.s), pct: t.s + '%', bar: i === 0 ? 'var(--accent)' : 'var(--fg-3)' })),
+        compare: () => this.nav('compare', { cmp: { ...S.cmp, b: b.id }, vote: -1 }), launch: () => this.nav('launch', { sel: { [b.id]: 1 } }), open: () => this.openResult('r-0923a', b.id) };
+    });
+    const benchChips = [{ id: 'all', label: 'tous', n: D.B.length }, ...D.CATS.map((c) => ({ id: c, label: c.toLowerCase(), n: D.B.filter((b) => b.cat === c).length }))].map((c) => ({ ...c, n: String(c.n), ...this.chip(S.benchCat === c.id), go: () => this.setState({ benchCat: c.id }) }));
+
+    const lbRows = this.lb(S.lbCat, S.lbSort);
+    const lbChips = [{ id: 'all', label: 'tous les benchs' }, ...D.CATS.map((c) => ({ id: c, label: c.toLowerCase() }))].map((c) => ({ ...c, ...this.chip(S.lbCat === c.id), go: () => this.setState({ lbCat: c.id }) }));
+    const lbSorts = [['score', 'score'], ['prix', 'prix'], ['vitesse', 'vitesse']].map(([id, label]) => ({ label, bg: S.lbSort === id ? 'var(--surface-2)' : 'transparent', fg: S.lbSort === id ? 'var(--fg)' : 'var(--fg-2)', go: () => this.setState({ lbSort: id }) }));
+
+    const rm = this.runMeta(S.runId) || this.runs()[0], rs = this.sum(rm.id), rmod = this.model(rm.model), isLiveRun = rm.id === 'live';
+    const run = { slug: rmod.slug, sub: rm.label + ' · via ' + rmod.tool + ' · ' + rm.date + ' ' + rm.start + ' · ' + rs.total + ' projets', isLive: isLiveRun && !!rs.running,
+      statusLabel: isLiveRun ? (rs.running ? 'en cours' : L.stopped ? 'arrêté' : 'terminé') : 'terminé', progress: rs.fin + '/' + rs.total, done: String(rs.done),
+      avg: rs.avg != null ? String(rs.avg) : '—', cost: this.money(rs.cost), dur: this.dur(rs.dur), segs: rs.segs, rows: this.itemsOf(rm.id).map((x, i) => this.rowOf(x, i, rm.id)),
+      stop: () => this.stop(), rerun: () => this.toast('Nouveau run lancé avec les mêmes benchs'), compare: () => this.nav('compare', { cmp: { b: 'bh', slots: this.presetModels() }, vote: -1 }) };
+
+    const rr = this.runMeta(S.res.run) || this.runs()[1], it0 = this.itemsOf(rr.id).find((x) => x.b === S.res.b), rb = this.bench(S.res.b), rmd = this.model(rr.model);
+    const hasV2 = !!it0.v2, ver = hasV2 ? S.ver : 'v1', it = ver === 'v2' ? { ...it0, ...it0.v2 } : it0, isBHb = rb.id === 'bh', stt = D.ST[it.status];
+    const showDemo = it.status === 'done', gr = it.score != null && showDemo, bi = D.B.indexOf(rb);
+    const f = it.f ?? Math.min(100, (it.score || 0) + 3), vv = it.v ?? (it.score || 0) - 2, ee = it.e ?? (it.score || 0) - 1;
+    const controlsOn = isBHb && showDemo && ver === 'v2';
+    const setDemo = (k) => (e) => this.setState({ demo: { ...S.demo, [k]: +e.target.value } });
+    const tests = isBHb ? '12/12' : it.status === 'done' ? (8 + bi % 5) + '/' + (8 + bi % 5) : it.status === 'nostart' ? '0/10' : '—';
+    const failMsgs = { nostart: 'npm run dev échoue : Cannot find module "./solver.glsl"', error: 'L’agent a abandonné après 14 tentatives de correction.', timeout: 'Coupé à 30:00 — build incomplet.', stopped: 'Arrêté à la main.', running: 'L’agent travaille…', pending: 'Pas encore lancé.' };
+    const jr = isBHb ? (ver === 'v2' ? D.J2 : D.J1) : [
+      ['00:00', 'READ', 'Lecture du prompt', 'prompt.md'], [this.clock(it.dur * 0.05), 'BASH', 'Initialisation du projet', 'npm init -y && npm i'],
+      [this.clock(it.dur * 0.2), 'EDIT', 'Implémentation principale', 'src/  +' + (180 + bi * 23) + ' lignes'], [this.clock(it.dur * 0.6), 'TEST', 'Vérification', 'npm test'],
+      ...(it.status === 'done' ? [[this.clock(it.dur), 'DONE', 'Livraison', 'npm run dev → localhost:5173']] : it.status === 'nostart' ? [[this.clock(it.dur * 0.9), 'FIX', 'Échec au démarrage non détecté', failMsgs.nostart], [this.clock(it.dur), 'DONE', 'Livré (ne démarre pas)', '']] : [[this.clock(it.dur || 0), 'ERR', stt.label, failMsgs[it.status] || '']]),
+    ];
+    const jc = { READ: 'var(--fg-2)', BASH: 'var(--fg-2)', EDIT: 'var(--accent-text)', TEST: 'var(--fg-2)', FIX: 'var(--warn)', DONE: 'var(--ok)', ERR: 'var(--err)' };
+    const code = (isBHb ? D.LENS : ['import { init } from "./app.js";', '', '// ' + rb.title, 'const app = init(document.querySelector("#app"));', 'app.start();']).map((l, i) => { const k = l.indexOf('//'); return { n: String(i + 1), code: k >= 0 ? l.slice(0, k) : l, comment: k >= 0 ? l.slice(k) : '' }; });
+    const files = (isBHb ? ['src/shaders/lens.frag', 'src/shaders/disk.frag', 'src/main.js', ...(ver === 'v2' ? ['src/ui/panel.js'] : []), 'index.html', 'package.json'] : ['src/app.js', 'src/main.js', 'index.html', 'package.json']).map((n, i) => ({ name: n, add: i === 0 ? '+148' : n === 'src/ui/panel.js' ? '+74' : '', bg: i === 0 ? 'var(--surface-2)' : 'transparent', fg: i === 0 ? 'var(--fg)' : 'var(--fg-2)' }));
+    const nextV = hasV2 ? 'v3' : 'v2';
+    const res = { slug: rb.slug, title: rb.title, modelSlug: rmd.slug, tool: rmd.tool, date: rr.date, st: stt, hasV2, url: 'localhost:5173 · ' + rb.slug + ' · ' + ver,
+      versions: hasV2 ? ['v1', 'v2'].map((v) => { const e = v === 'v2' ? { ...it0, ...it0.v2 } : it0; return { label: v, sub: this.dur(e.dur) + ' · ' + this.money(e.cost), bg: ver === v ? 'var(--surface-2)' : 'transparent', fg: ver === v ? 'var(--fg)' : 'var(--fg-2)', go: () => this.setState({ ver: v }) }; }) : [],
+      compareLabel: hasV2 ? 'Comparer v1 / v2' : 'Comparer',
+      compare: () => this.nav('compare', { cmp: { b: rb.id, slots: hasV2 ? [{ run: rr.id, v: 'v1' }, { run: rr.id, v: 'v2' }] : [{ run: rr.id, v: 'v1' }, ...this.presetModels().filter((s) => s.run !== rr.id).slice(0, 2)] }, vote: -1 }),
+      rerun: () => this.toast(rb.slug + ' relancé avec ' + rmd.slug),
+      isBH: isBHb && showDemo, isThumb: !isBHb && showDemo, isFail: !showDemo, thumb: rb.thumb, failMsg: failMsgs[it.status] || '',
+      p: controlsOn ? { spin: S.demo.spin, tilt: S.demo.tilt, glow: S.demo.glow, n: 1700, pal: 0, lens: 1, stars: S.demo.stars ? 1 : 0 } : this.bhParams(rmd.id, ver),
+      stageTag: isBHb ? 'three.js · WebGL · 60 fps' : 'aperçu', hasControls: controlsOn, noControls: isBHb && showDemo && !controlsOn,
+      noControlsMsg: 'Cette version n’expose aucun réglage.',
+      suggestPanel: () => this.setState({ retouch: 'Ajoute un panneau de réglages : rotation, inclinaison, luminosité, étoiles.' }),
+      controls: [['rotation', 'spin', 0, 2.5, 0.05], ['inclinaison', 'tilt', 0.05, 0.7, 0.01], ['luminosité', 'glow', 0.3, 1.8, 0.05]].map(([label, k, min, max, step]) => ({ label, min, max, step, val: S.demo[k], txt: S.demo[k].toFixed(2), on: setDemo(k) })),
+      toggleStars: () => this.setState({ demo: { ...S.demo, stars: !S.demo.stars } }), starsTxt: S.demo.stars ? 'on' : 'off', starsFg: S.demo.stars ? 'var(--accent-text)' : 'var(--fg-3)',
+      scoreTxt: gr ? String(it.score) : showDemo ? 'livré' : '—', scoreUnit: gr ? '/100' : showDemo ? 'non noté' : '',
+      subs: [['fonctionnel', f], ['visuel', vv], ['engineering', ee]].map(([k, v]) => ({ k, v: gr ? String(v) : '—', pct: gr ? v + '%' : '0%' })),
+      metrics: [
+        { k: 'durée', v: this.dur(this.durOf(it)), fg: 'var(--fg)' }, { k: 'coût', v: this.money(this.costOf(it)), fg: 'var(--fg)' },
+        { k: 'tokens in / out', v: Math.round(this.costOf(it) * 190) + 'k / ' + Math.round(this.costOf(it) * 18) + 'k', fg: 'var(--fg)' },
+        { k: 'démarre', v: showDemo ? '✓ oui' : '✕ non', fg: showDemo ? 'var(--ok)' : 'var(--err)' }, { k: 'tests', v: tests, fg: 'var(--fg)' },
+      ],
+      delta: hasV2 ? (ver === 'v2' ? 'v2 vs v1 : +8 pts · −17 min · −1.04 $' : 'une v2 existe : +8 pts, −1.04 $') : 'aucune retouche',
+      nextV, suggest: ['ajoute un panneau de réglages', 'optimise les fps', 'rends-le responsive'].map((l) => ({ label: l, go: () => this.setState({ retouch: l }) })),
+      doRetouch: () => { this.toast('Retouche lancée → ' + nextV + ' en cours'); this.setState({ retouch: '' }); },
+      tabs: [['prompt', 'prompt'], ['code', 'code'], ['journal', 'journal · ' + jr.length]].map(([id, label]) => ({ label, bd: S.tab === id ? 'var(--fg)' : 'transparent', fg: S.tab === id ? 'var(--fg)' : 'var(--fg-3)', go: () => this.setState({ tab: id }) })),
+      tab: { prompt: S.tab === 'prompt', code: S.tab === 'code', journal: S.tab === 'journal' },
+      prompts: [{ k: 'prompt · v1', v: rb.prompt }, ...(ver === 'v2' ? [{ k: 'retouche · v2', v: 'Ajoute un panneau de réglages : vitesse de rotation, inclinaison, luminosité du disque, fond étoilé.' }] : [])],
+      files, code, journal: jr.map(([t, kind, title, detail]) => ({ t, kind, title, detail, fg: jc[kind], bg: 'var(--surface-2)' })) };
+
+    const cm = S.cmp, cb = this.bench(cm.b), n = cm.slots.length;
+    const cdata = cm.slots.map((sl, i) => {
+      const r = this.runMeta(sl.run) || this.latest('opus'), m = this.model(r.model), x = this.itemsOf(r.id).find((y) => y.b === cm.b), v = sl.v === 'v2' && x && x.v2 ? 'v2' : 'v1', e = x ? (v === 'v2' ? { ...x, ...x.v2 } : x) : null;
+      return { r, m, x, v, e, ok: e && e.status === 'done' };
+    });
+    const L4 = 'ABCD';
+    const slots = cdata.map((c, i) => { const pref = S.vote === i; return {
+      letter: L4[i], label: S.blind ? 'Résultat ' + L4[i] : c.m.slug + (c.x && c.x.v2 ? ' · ' + c.v : ''), sub: S.blind ? 'identité masquée' : c.r.label + ' · via ' + c.m.tool,
+      st: c.e ? D.ST[c.e.status] : D.ST.pending, isBH: cm.b === 'bh' && c.ok, isThumb: cm.b !== 'bh' && c.ok, isFail: !c.ok, thumb: cb.thumb, p: this.bhParams(c.m.id, c.v),
+      canRemove: n > 2, remove: () => this.setState({ cmp: { ...cm, slots: cm.slots.filter((_, j) => j !== i) }, vote: -1 }),
+      prefer: () => this.setState({ vote: pref ? -1 : i }), preferTxt: pref ? '✓ préféré' : 'Je préfère', bd: pref ? 'var(--accent)' : 'var(--border)',
+      prefBd: pref ? 'var(--accent)' : 'var(--border-strong)', prefBg: pref ? 'var(--accent-soft)' : 'transparent', prefFg: pref ? 'var(--accent-text)' : 'var(--fg)' }; });
+    const val = (c, k) => { if (!c.e || c.e.status === 'pending') return null; const e = c.e, s = e.score;
+      if (k === 'score') return c.ok ? s : null; if (k === 'f') return c.ok && s != null ? (e.f ?? Math.min(100, s + 3)) : null; if (k === 'v') return c.ok && s != null ? (e.v ?? s - 2) : null; if (k === 'e') return c.ok && s != null ? (e.e ?? s - 1) : null;
+      if (k === 'dur') return this.durOf(e); if (k === 'cost') return this.costOf(e); if (k === 'tok') return this.costOf(e) * 190; return null; };
+    const fmt = (k, v) => v == null ? '—' : k === 'dur' ? this.dur(v) : k === 'cost' ? this.money(v) : k === 'tok' ? Math.round(v) + 'k' : String(v);
+    const crow = [['score', 'score', 1], ['fonctionnel', 'f', 1], ['visuel', 'v', 1], ['engineering', 'e', 1], ['durée', 'dur', -1], ['coût', 'cost', -1], ['tokens', 'tok', -1]].map(([k, key, dir]) => {
+      const vs = cdata.map((c) => val(c, key)), valid = vs.filter((v) => v != null), best = valid.length > 1 ? (dir > 0 ? Math.max(...valid) : Math.min(...valid)) : null;
+      return { k, cells: vs.map((v) => ({ txt: fmt(key, v), best: v != null && v === best, w: key === 'score' ? '600' : '400', fg: v == null ? 'var(--fg-3)' : 'var(--fg)' })) };
+    });
+    crow.push({ k: 'démarre', cells: cdata.map((c) => ({ txt: c.ok ? '✓ oui' : c.e ? '✕ non' : '—', best: false, w: '400', fg: c.ok ? 'var(--ok)' : 'var(--err)' })) });
+    const used = cm.slots.map((s) => this.runMeta(s.run).model), free = D.M.find((m) => !used.includes(m.id));
+    const cmp = { slug: cb.slug, title: cb.title, n: String(n), cols: 'repeat(' + n + ',minmax(0,1fr))', mcols: '140px repeat(' + n + ',minmax(0,1fr))', slots, rows: crow,
+      canAdd: n < 4 && !!free, add: () => free && this.setState({ cmp: { ...cm, slots: [...cm.slots, { run: this.latest(free.id).id, v: 'v1' }] } }),
+      toggleBlind: () => this.setState({ blind: !S.blind }), blindBd: S.blind ? 'var(--accent)' : 'var(--border-strong)', swBg: S.blind ? 'var(--accent)' : 'var(--border-strong)', swX: S.blind ? '14px' : '2px',
+      presets: [['modèles', () => this.setState({ cmp: { b: cm.b, slots: this.presetModels() }, vote: -1 }), cm.slots.some((s, i) => i > 0 && s.run !== cm.slots[0].run)], ['v1 / v2', () => this.setState({ cmp: { b: 'bh', slots: [{ run: 'r-0923a', v: 'v1' }, { run: 'r-0923a', v: 'v2' }] }, vote: -1 }), cm.slots.length === 2 && cm.slots[0].run === cm.slots[1].run]].map(([label, go, a]) => ({ label, go, bg: a ? 'var(--surface-2)' : 'transparent', fg: a ? 'var(--fg)' : 'var(--fg-2)' })),
+      benchChips: D.B.map((b) => ({ label: b.slug, ...this.chip(b.id === cm.b), go: () => this.setState({ cmp: { ...cm, b: b.id }, vote: -1 }) })) };
+
+    const lmod = this.model(S.launchModel), selIds = D.B.filter((b) => S.sel[b.id]).map((b) => b.id), nn = selIds.length, lbAll = this.lb('all', 'score');
+    const launch = {
+      models: D.M.map((m) => { const a = m.id === S.launchModel; return { slug: m.slug, tool: m.tool, score: lbAll.find((r) => r.slug === m.slug).score, cost: this.money(m.cost), bd: a ? 'var(--accent)' : 'var(--border)', bg: a ? 'var(--accent-soft)' : 'var(--surface)', ring: a ? 'var(--accent)' : 'var(--border-strong)', dot: a ? 'var(--accent)' : 'transparent', pick: () => this.setState({ launchModel: m.id }) }; }),
+      cats: D.CATS.map((c) => { const ids = D.B.filter((b) => b.cat === c).map((b) => b.id), k = ids.filter((id) => S.sel[id]).length, full = k === ids.length; return { label: c.toLowerCase(), count: k + '/' + ids.length, ...this.chip(full), toggle: () => { const s = { ...S.sel }; ids.forEach((id) => { if (full) delete s[id]; else s[id] = 1; }); this.setState({ sel: s }); } }; }),
+      benches: D.B.map((b) => { const on = !!S.sel[b.id]; return { slug: b.slug, meta: b.title + ' · ' + b.diff, thumb: b.thumb, est: '~' + Math.round(lmod.min * (b.diff === 'avancé' ? 1.4 : b.diff === 'débutant' ? 0.6 : 1)) + ' min', box: on ? 'var(--accent)' : 'transparent', boxBd: on ? 'var(--accent)' : 'var(--border-strong)', check: on ? '✓' : '', bd: on ? 'var(--accent)' : 'var(--border)', bg: on ? 'var(--accent-soft)' : 'var(--surface)', toggle: () => { const s = { ...S.sel }; if (on) delete s[b.id]; else s[b.id] = 1; this.setState({ sel: s }); } }; }),
+      all: () => this.setState({ sel: Object.fromEntries(D.B.map((b) => [b.id, 1])) }), none: () => this.setState({ sel: {} }),
+      summary: [{ k: 'modèle', v: lmod.slug }, { k: 'outil', v: lmod.tool }, { k: 'projets', v: String(nn) }, { k: 'durée max', v: nn ? this.dur(nn * 1800) : '—' }, { k: 'durée estimée', v: nn ? '~' + this.dur(nn * lmod.min * 60) : '—' }, { k: 'coût estimé', v: nn ? '~' + this.money(nn * lmod.cost) : '—' }],
+      cant: nn === 0, btnOp: nn ? '1' : '.4', btnLabel: 'Lancer · ' + nn + ' projet' + (nn > 1 ? 's' : ''), go: () => { if (nn) this.launch(S.launchModel, selIds); }, cancel: () => this.nav('home') };
+
+    const C = (label, opts, go, menuTitle) => ({ label, opts: opts || [], go, menuTitle: menuTitle || '' });
+    const mOpts = (cur) => D.M.map((m) => ({ label: m.slug, sub: m.tool, go: () => this.openRun(this.latest(m.id).id), bg: m.id === cur ? 'var(--surface-2)' : 'transparent' }));
+    const rOpts = (mid, cur) => this.runs().filter((r) => r.model === mid).map((r) => { const s = this.sum(r.id); return { label: r.label, sub: r.date + ' · ' + (r.id === 'live' && s.running ? 'en direct' : s.done + '/' + s.total), go: () => this.openRun(r.id), bg: r.id === cur ? 'var(--surface-2)' : 'transparent' }; });
+    const bOpts = (rid, cur) => D.B.map((b) => ({ label: b.slug, sub: b.cat, go: () => this.openResult(rid, b.id), bg: b.id === cur ? 'var(--surface-2)' : 'transparent' }));
+    const cr = [C('cockpit', null, () => this.nav('home'))];
+    if (scr === 'benches') { cr.push(C('benchs', null, () => this.nav('benches'))); cr.push(C(S.benchCat === 'all' ? 'tous' : S.benchCat.toLowerCase(), [{ id: 'all', l: 'tous' }, ...D.CATS.map((c) => ({ id: c, l: c.toLowerCase() }))].map((c) => ({ label: c.l, sub: '', go: () => this.setState({ benchCat: c.id, crumb: -1 }), bg: S.benchCat === c.id ? 'var(--surface-2)' : 'transparent' })), null, 'catégorie')); }
+    if (scr === 'leaderboard') cr.push(C('classement', null, () => this.nav('leaderboard')));
+    if (scr === 'run') { cr.push(C(rmod.slug, mOpts(rmod.id), null, 'modèle')); cr.push(C(rm.label, rOpts(rmod.id, rm.id), null, 'run')); }
+    if (scr === 'result') { cr.push(C(rmd.slug, mOpts(rmd.id), null, 'modèle')); cr.push(C(rr.label, rOpts(rmd.id, rr.id), null, 'run')); cr.push(C(rb.slug, bOpts(rr.id, rb.id), null, 'bench')); if (hasV2) cr.push(C(ver, ['v1', 'v2'].map((v) => ({ label: v, sub: '', go: () => this.setState({ ver: v, crumb: -1 }), bg: v === ver ? 'var(--surface-2)' : 'transparent' })), null, 'version')); }
+    if (scr === 'compare') { cr.push(C('comparer', null, () => this.nav('compare'))); cr.push(C(cb.slug, D.B.map((b) => ({ label: b.slug, sub: b.cat, go: () => this.setState({ cmp: { ...cm, b: b.id }, crumb: -1, vote: -1 }), bg: b.id === cb.id ? 'var(--surface-2)' : 'transparent' })), null, 'bench')); }
+    if (scr === 'launch') cr.push(C('nouveau-run', null, () => this.nav('launch')));
+    if (scr === 'tokens') cr.push(C('tokens', null, () => this.nav('tokens')));
+    const crumbs = cr.map((c, i) => { const has = c.opts.length > 0, open = S.crumb === i && has, last = i === cr.length - 1;
+      return { label: c.label, sep: i > 0, hasMenu: has, open, opts: c.opts, menuTitle: c.menuTitle, fg: last ? 'var(--fg)' : 'var(--fg-2)', bg: open ? 'var(--surface-2)' : 'transparent', bd: has ? 'var(--border)' : 'transparent',
+        click: () => has ? this.setState({ crumb: open ? -1 : i }) : c.go && c.go() }; });
+
+    const cmds = [
+      ['actions', 'Lancer un run', '', () => this.nav('launch')],
+      ['actions', 'Thème ' + (theme === 'dark' ? 'clair' : 'sombre'), '', () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark', pal: false })],
+      ...(live.running ? [['actions', 'Arrêter le run en direct', live.slug, () => { this.stop(); this.setState({ pal: false }); }]] : []),
+      ['actions', 'Comparer en mode aveugle', '', () => this.nav('compare', { blind: true })],
+      ['aller à', 'Accueil', '', () => this.nav('home')], ['aller à', 'Benchs', '', () => this.nav('benches')], ['aller à', 'Classement', '', () => this.nav('leaderboard')], ['aller à', 'Tokens', '', () => this.nav('tokens')],
+      ...D.M.map((m) => ['modèles', m.slug, m.tool, () => this.openRun(this.latest(m.id).id)]),
+      ...this.runs().map((r) => ['runs', r.label + ' · ' + this.model(r.model).slug, r.id === 'live' && live.running ? 'en direct' : r.date, () => this.openRun(r.id)]),
+      ...D.B.map((b) => ['benchs', b.slug, b.title, () => this.openResult('r-0923a', b.id)]),
+    ];
+    const qq = S.q.trim().toLowerCase(), hits = cmds.filter((c) => !qq || (c[1] + ' ' + c[2] + ' ' + c[0]).toLowerCase().includes(qq)).slice(0, qq ? 12 : 10);
+    const pitems = []; let lg = '';
+    hits.forEach((c, i) => { if (c[0] !== lg) { pitems.push({ head: true, row: false, label: c[0] }); lg = c[0]; } pitems.push({ head: false, row: true, label: c[1], sub: c[2], go: c[3], bg: i === 0 ? 'var(--surface-2)' : 'transparent' }); });
+    this._first = hits[0] && hits[0][3];
+
+    const tokens = D.TOK.map(([role, v, dark, light, use]) => ({ role, v, dark, light, use }));
+    const cssExport = ':root {\n' + D.TOK.map((t) => '  ' + t[1] + ': ' + t[3] + ';').join('\n') + '\n}\n\n.dark {\n' + D.TOK.map((t) => '  ' + t[1] + ': ' + t[2] + ';').join('\n') + '\n}\n\n@theme inline {\n  --font-sans: "Inter", sans-serif;\n  --font-mono: "JetBrains Mono", monospace;\n' + D.TOK.map((t) => '  --color-' + t[1].slice(2) + ': var(' + t[1] + ');').join('\n') + '\n}';
+
+    return {
+      theme, themeLabel: theme === 'dark' ? 'dark' : 'light', toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }), pulse, nav, live, kpis, homeResults, topModels,
+      is: { home: scr === 'home', benches: scr === 'benches', leaderboard: scr === 'leaderboard', run: scr === 'run', result: scr === 'result', compare: scr === 'compare', launch: scr === 'launch', tokens: scr === 'tokens' },
+      goHome: () => this.nav('home'), goLaunch: () => this.nav('launch'), goLeaderboard: () => this.nav('leaderboard'), goRun: () => this.nav('run'),
+      benchCards, benchChips, benchQ: S.benchQ, onBenchQ: (e) => this.setState({ benchQ: e.target.value }), benchCount: benchCards.length + ' projets · 5 catégories',
+      launchFiltered: () => this.nav('launch', { sel: Object.fromEntries(benchCards.map((b) => [D.B.find((x) => x.slug === b.slug).id, 1])) }),
+      lbRows, lbChips, lbSorts, lbCatLabel: S.lbCat === 'all' ? 'tous les benchs' : S.lbCat.toLowerCase(),
+      run, res, retouch: S.retouch, onRetouch: (e) => this.setState({ retouch: e.target.value }), stageRef: this.stageRef,
+      fullscreen: () => { const el = this.stageRef.current; if (el && el.requestFullscreen) el.requestFullscreen(); },
+      cmp, launch, crumbs, anyCrumb: S.crumb >= 0, closeCrumb: () => this.setState({ crumb: -1 }),
+      pal: { open: S.pal, q: S.q, items: pitems, empty: pitems.length === 0 }, palRef: this.palRef, openPal: () => this.openPal(), closePal: () => this.setState({ pal: false }),
+      onQ: (e) => this.setState({ q: e.target.value }), onPalKey: (e) => { if (e.key === 'Enter' && this._first) this._first(); },
+      tokens, cssExport, hasToast: !!S.toast, toast: S.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

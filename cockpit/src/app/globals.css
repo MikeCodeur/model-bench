@@ -1,0 +1,252 @@
+/* Fonts, loaded exactly like the mockup (tokens/fonts.css). Must stay the first rule. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* No Tailwind preflight: the mockup renders on browser defaults plus the base rules below. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+/* ===== Design system tokens — docs/cockpit/design/tokens, copied as is ===== */
+
+/* tokens/primitives.css */
+/* PRIMITIVES — raw values. Never use directly in components; go through semantic tokens. */
+:root {
+  /* Zinc — neutrals */
+  --zinc-0: #ffffff;
+  --zinc-50: #fafafa;
+  --zinc-100: #f4f4f5;
+  --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8;
+  --zinc-400: #a1a1aa;
+  --zinc-450: #8b8b94;
+  --zinc-500: #6b6b73;
+  --zinc-600: #52525b;
+  --zinc-700: #3f3f46;
+  --zinc-750: #2c2c30;
+  --zinc-800: #232326;
+  --zinc-850: #1a1a1d;
+  --zinc-900: #111113;
+  --zinc-950: #09090b;
+
+  /* Blue — the only accent: active / running / focus */
+  --blue-50: #eff4ff;
+  --blue-300: #93c5fd;
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-950: #0f1b2e;
+
+  /* Green — delivered */
+  --green-50: #ecfdf3;
+  --green-400: #4ade80;
+  --green-700: #15803d;
+  --green-950: #0d2016;
+
+  /* Amber — timeout */
+  --amber-50: #fef7e0;
+  --amber-400: #fbbf24;
+  --amber-700: #a16207;
+  --amber-950: #271d07;
+
+  /* Red — error / does not start */
+  --red-50: #fef1f1;
+  --red-400: #f87171;
+  --red-700: #b91c1c;
+  --red-950: #2a1111;
+
+  /* Alpha */
+  --black-60: rgba(0, 0, 0, 0.6);
+  --black-78: rgba(0, 0, 0, 0.78);
+  --demo-black: #030304;
+}
+
+/* tokens/semantic.css */
+/* SEMANTIC — dark is the default theme. Light via [data-theme="light"] (or .light). */
+:root, [data-theme="dark"] {
+  --background: var(--zinc-950);
+  --card: var(--zinc-900);
+  --muted: var(--zinc-850);
+  --border: var(--zinc-800);
+  --input: var(--zinc-700);
+  --foreground: var(--zinc-50);
+  --muted-foreground: var(--zinc-400);
+  --subtle-foreground: var(--zinc-450);
+  --primary: var(--zinc-50);
+  --primary-foreground: var(--zinc-950);
+  --ring: var(--blue-500);
+  --active-foreground: var(--blue-400);
+  --accent: var(--blue-950);
+  --success: var(--green-400);
+  --success-soft: var(--green-950);
+  --warning: var(--amber-400);
+  --warning-soft: var(--amber-950);
+  --destructive: var(--red-400);
+  --destructive-soft: var(--red-950);
+  --stopped: var(--zinc-400);
+  --stopped-soft: var(--zinc-850);
+  --scrim: var(--black-60);
+  --overlay-label: var(--black-78);
+  --shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  --background: var(--zinc-50);
+  --card: var(--zinc-0);
+  --muted: var(--zinc-100);
+  --border: var(--zinc-200);
+  --input: var(--zinc-300);
+  --foreground: var(--zinc-950);
+  --muted-foreground: var(--zinc-600);
+  --subtle-foreground: var(--zinc-500);
+  --primary: var(--zinc-950);
+  --primary-foreground: var(--zinc-50);
+  --ring: var(--blue-600);
+  --active-foreground: var(--blue-700);
+  --accent: var(--blue-50);
+  --success: var(--green-700);
+  --success-soft: var(--green-50);
+  --warning: var(--amber-700);
+  --warning-soft: var(--amber-50);
+  --destructive: var(--red-700);
+  --destructive-soft: var(--red-50);
+  --stopped: var(--zinc-600);
+  --stopped-soft: var(--zinc-100);
+  --scrim: rgba(9, 9, 11, 0.4);
+  --shadow-popover: 0 16px 40px rgba(9, 9, 11, 0.12);
+  color-scheme: light;
+}
+
+/* tokens/typography.css */
+:root {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* scale (px — tuned for 1440 desktop filmed at 1080p) */
+  --text-10: 10.5px;
+  --text-11: 11.5px;
+  --text-12: 12.5px;
+  --text-13: 13.5px;
+  --text-14: 14px;
+  --text-15: 15px;
+  --text-22: 22px;
+  --text-28: 28px;
+  --text-56: 56px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --leading-tight: 1;
+  --leading-snug: 1.25;
+  --leading-body: 1.5;
+  --leading-reading: 1.65;
+
+  /* roles */
+  --type-page-title: 600 var(--text-22)/1.2 var(--font-sans);
+  --type-section: 600 var(--text-15)/1.2 var(--font-sans);
+  --type-body: 400 var(--text-14)/1.5 var(--font-sans);
+  --type-ui: 500 var(--text-13)/1 var(--font-sans);
+  --type-id: 500 var(--text-13)/1.3 var(--font-mono);
+  --type-meta: 400 var(--text-12)/1.3 var(--font-mono);
+  --type-label: 500 var(--text-11)/1 var(--font-mono);
+  --type-metric: 600 var(--text-22)/1 var(--font-mono);
+  --type-score-hero: 600 var(--text-56)/0.9 var(--font-mono);
+}
+
+/* tokens/spacing.css */
+:root {
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 12px;
+  --space-6: 14px;
+  --space-7: 16px;
+  --space-8: 18px;
+  --space-10: 24px;
+  --space-12: 28px;
+
+  --radius-xs: 4px;
+  --radius-sm: 5px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-full: 999px;
+
+  --control-sm: 26px;
+  --control-md: 32px;
+  --control-lg: 38px;
+  --row-min: 58px;
+  --header-h: 56px;
+  --page-max: 1440px;
+
+  --border-width: 1px;
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --pulse: 1.4s ease-in-out infinite;
+}
+
+/* tokens/base.css */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font: var(--type-body);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--active-foreground); text-underline-offset: 0.2em; }
+a:hover { color: var(--foreground); }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@keyframes mb-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .3; transform: scale(.65); } }
+
+/* ===== Base rules of the design-system stylesheet loaded by Cockpit.dc.html ===== */
+html { scroll-behavior: smooth; }
+button, input, select, textarea { font: inherit; }
+button, [role="button"] { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.48; }
+img, svg { display: block; max-width: 100%; }
+
+/* Mockup keyframes (Cockpit.dc.html) */
+@keyframes ckpulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .3; transform: scale(.65); } }
+
+/* Hover styles declared with `sx(style, hover)` (src/components/ck/style.ts) */
+[data-hc]:not(:disabled):hover { color: var(--h-color) !important; }
+[data-hb]:not(:disabled):hover { background: var(--h-background) !important; }
+[data-hbc]:not(:disabled):hover { border-color: var(--h-border-color) !important; }
+[data-ho]:not(:disabled):hover { opacity: var(--h-opacity) !important; }
+
+/* shadcn / Tailwind utilities read the same semantic tokens */
+@theme inline {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--active-foreground);
+  --color-active-foreground: var(--active-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-stopped: var(--stopped);
+  --color-stopped-soft: var(--stopped-soft);
+}

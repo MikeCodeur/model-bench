@@ -153,6 +153,89 @@ def kill_leftovers(work: Path) -> int:
     return killed
 
 
+def procs_dir() -> Path:
+    return data_dir() / ".bench" / "procs"
+
+
+_registration: dict | None = None
+
+
+def register(kind: str, model: str | None, run: str | None, tests: list[str]) -> None:
+    """Record this bench process (kind `run` or `demo`) so `bench stop` can find it."""
+    global _registration
+    procs_dir().mkdir(parents=True, exist_ok=True)
+    _registration = {"pid": os.getpid(), "kind": kind, "model": model, "run": run, "tests": tests,
+                     "groups": [], "argv": sys.argv[1:], "started_at": now_iso()}
+    write_json(procs_dir() / f"{os.getpid()}.json", _registration)
+
+
+def track_group(pgid: int) -> None:
+    """Remember a process group started by this bench process, to clean it up if bench itself is killed."""
+    if _registration is not None:
+        _registration["groups"].append(pgid)
+        write_json(procs_dir() / f"{os.getpid()}.json", _registration)
+
+
+def unregister() -> None:
+    (procs_dir() / f"{os.getpid()}.json").unlink(missing_ok=True)
+
+
+def is_bench_process(pid: int) -> bool:
+    result = subprocess.run(["ps", "-p", str(pid), "-o", "command="], capture_output=True, text=True)
+    return "bench.py" in result.stdout
+
+
+def registered_processes() -> list[dict]:
+    """Live registered bench processes; entries of dead processes are removed."""
+    entries = []
+    for path in sorted(procs_dir().glob("*.json")) if procs_dir().exists() else []:
+        entry = load_json(path)
+        if is_bench_process(entry["pid"]):
+            entries.append(entry)
+        else:
+            for pgid in entry.get("groups", []):
+                kill_group(pgid)
+            path.unlink(missing_ok=True)
+    return entries
+
+
+BENCH_COMMAND = re.compile(r"bench\.py (run|start|open|serve|shots)\b(.*)")
+
+
+def unregistered_processes(known: set[int]) -> list[dict]:
+    """Bench processes missing from the registry (started by an older bench), described from their command line."""
+    result = subprocess.run(["ps", "-axo", "pid=,command="], capture_output=True, text=True)
+    entries = []
+    for line in result.stdout.splitlines():
+        pid_text, _, command = line.strip().partition(" ")
+        match = BENCH_COMMAND.search(command)
+        pid = int(pid_text)
+        if not match or pid in known or pid == os.getpid():
+            continue
+        argv = shlex.split(match.group(2))
+        if match.group(1) == "run":
+            option = lambda name: argv[argv.index(name) + 1] if name in argv[:-1] else None
+            model, run = option("--model"), option("--run") or option("--run-id")
+            tests = [t.strip() for t in (option("--ids") or "").split(",") if t.strip()]
+            kind = "run"
+        else:
+            target = next((arg for arg in argv if not arg.startswith("-") and "/" in arg), "")
+            model, run, test = (target.strip("/").split("/") + [None, None, None])[:3]
+            tests, kind = ([test] if test else []), "demo"
+        entries.append({"pid": pid, "kind": kind, "model": model, "run": run, "tests": tests, "groups": []})
+    return entries
+
+
+def process_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return subprocess.run(["ps", "-p", str(pid), "-o", "stat="], capture_output=True, text=True).stdout.strip()[:1] not in ("Z", "")
+
+
 def execute(args: list[str], work: Path, log_path: Path, timeout_s: float, idle_s: float) -> tuple[int | None, str | None, float]:
     """Run the agent with hard and idle timeouts. Returns (exit code, forced status, duration)."""
     started = time.monotonic()
@@ -161,6 +244,7 @@ def execute(args: list[str], work: Path, log_path: Path, timeout_s: float, idle_
     forced = None
     with log_path.open("wb") as log:
         proc = subprocess.Popen(args, cwd=work, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        track_group(proc.pid)
         try:
             while proc.poll() is None:
                 time.sleep(2)
@@ -303,6 +387,7 @@ def run_attempt(bench: dict, number: int, run_dir: Path, run: dict, model: dict,
         "exit_code": exit_code,
         "status": final_status(exit_code, forced, log_path),
         "leftover_processes_killed": leftovers,
+        "stack": detect_stack(attempt_dir / "workspace"),
         "start": None,
         "tokens": tokens,
         "cost_usd": cost,
@@ -330,7 +415,9 @@ def cmd_run(args: argparse.Namespace) -> None:
 
     benches = preparer.select_benchmarks(catalog, args.category, resolve_ids(catalog["benchmarks"], args.ids))
     model_dir = data_dir() / args.model
-    run_id = args.run or next_run_id(model_dir, datetime.now().strftime("%Y-%m-%d"))
+    if args.run_id and (model_dir / args.run_id).exists():
+        raise SystemExit(f"Run {args.run_id} already exists, use --run to add attempts to it")
+    run_id = args.run or args.run_id or next_run_id(model_dir, datetime.now().strftime("%Y-%m-%d"))
     run_dir = model_dir / run_id
     if args.delta:
         args.iterate = True
@@ -371,6 +458,9 @@ def cmd_run(args: argparse.Namespace) -> None:
         "attempts": [],
     }
     run.update(suite_commit=suite_commit(), cli_version=tool_version(model.get("version_command")), env=environment(), guards=guards)
+    run["planned"] = list(dict.fromkeys([*run.get("planned", []), *(bench["id"] for bench, _ in planned)]))
+    write_json(run_path, run)
+    register("run", args.model, run_id, [bench["id"] for bench, _ in planned])
 
     for bench, number in planned:
         spent = sum(item["cost_usd"] or 0 for item in run["attempts"])
@@ -524,11 +614,11 @@ def serve_info_page(directory: Path) -> ThreadingHTTPServer:
 class App:
     """A result copied to a temp dir and started with the launch contract."""
 
-    def __init__(self, attempt_dir: Path) -> None:
+    def __init__(self, attempt_dir: Path, port: int | None = None) -> None:
         self.attempt_dir = attempt_dir
         self.tmp = Path(tempfile.mkdtemp(prefix="model-bench-open-"))
         self.app = self.tmp / "app"
-        self.port = free_port()
+        self.port = port or free_port()
         self.proc: subprocess.Popen | None = None
         self.log_path = self.tmp / "open.log"
         self.command: list[str] | None = None
@@ -544,9 +634,10 @@ class App:
             if self.command:
                 self.proc = subprocess.Popen(self.command, cwd=self.app, env=env, stdin=subprocess.DEVNULL,
                                              stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+                track_group(self.proc.pid)
                 ok = wait_http(self.port, self.proc, 180)
         attempt = load_json(self.attempt_dir / "attempt.json")
-        attempt.update(start="ok" if ok else "ko", start_checked_at=now_iso())
+        attempt.update(start="ok" if ok else "ko", start_checked_at=now_iso(), stack=detect_stack(self.app))
         write_json(self.attempt_dir / "attempt.json", attempt)
         return ok
 
@@ -583,6 +674,11 @@ class App:
         if self.proc:
             kill_group(self.proc.pid)
         shutil.rmtree(self.tmp, ignore_errors=True)
+
+
+def register_demo(attempt_dirs: list[Path]) -> None:
+    first = attempt_dirs[0]
+    register("demo", first.parts[-4], first.parts[-3], sorted({d.parent.name for d in attempt_dirs}))
 
 
 def open_attempt(attempt_dir: Path, check: bool) -> bool:
@@ -628,19 +724,20 @@ def cmd_serve(args: argparse.Namespace) -> None:
     attempt_dirs = sorted(p.parent for p in run_dir.glob("*/attempt-*/attempt.json"))
     if not attempt_dirs:
         raise SystemExit(f"No finished attempt in {run_dir}")
+    register_demo(attempt_dirs)
     site = Path(tempfile.mkdtemp(prefix="model-bench-serve-"))
     apps: list[App] = []
     links = []
     try:
-        for attempt_dir in attempt_dirs:
-            app = App(attempt_dir)
+        for index, attempt_dir in enumerate(attempt_dirs, 1):
+            app = App(attempt_dir, args.port + index)
             apps.append(app)
             ok = app.start()
             short = short_id(attempt_dir.parent.name)
             page = site / short / attempt_dir.name
             page.mkdir(parents=True)
             (page / "index.html").write_text(app.info_html() if ok else f"<p>{app.label()} does not start</p>", encoding="utf-8")
-            print(f"{'ok' if ok else 'KO'}  /{short}/{attempt_dir.name}/", flush=True)
+            print(f"{'ok' if ok else 'KO'}  /{short}/{attempt_dir.name}/  (app on port {app.port})", flush=True)
         for test_dir in sorted({d.parent for d in attempt_dirs}):
             latest = f"attempt-{attempt_numbers(test_dir)[-1]}"
             short = short_id(test_dir.name)
@@ -683,9 +780,122 @@ def cmd_open(args: argparse.Namespace) -> None:
     attempts = resolve_attempts(args.target)
     if not args.check and len(attempts) > 1:
         raise SystemExit("Open one test at a time, or use --check for a whole run")
+    register_demo(attempts)
     results = [open_attempt(attempt, args.check) for attempt in attempts]
     if args.check:
         print(f"{sum(results)}/{len(results)} start")
+
+
+def cmd_start(args: argparse.Namespace) -> None:
+    """Start one attempt with the launch contract, print its URL as JSON, keep serving until SIGTERM."""
+    attempts = resolve_attempts(args.target)
+    if len(attempts) != 1 or not (attempts[0] / "attempt.json").exists():
+        raise SystemExit(f"Cannot start {args.target}: expected one finished attempt")
+    register_demo(attempts)
+    app = App(attempts[0], args.port)
+    try:
+        ok = app.start()
+        url = f"http://127.0.0.1:{app.port}/"
+        print(json.dumps({"ok": ok, "url": url if ok else None, "port": app.port,
+                          "log": None if ok else app.log_path.read_text(errors="replace")[-1500:]}), flush=True)
+        if ok:
+            try:
+                app.proc.wait()
+            except KeyboardInterrupt:
+                pass
+    finally:
+        app.stop()
+
+
+CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+
+def capture(url: str, target: Path) -> bool:
+    target.parent.mkdir(exist_ok=True)
+    png = target.with_suffix(".png")
+    subprocess.run([CHROME, "--headless=new", "--hide-scrollbars", "--window-size=1440,900", "--virtual-time-budget=6000",
+                    f"--screenshot={png}", url], capture_output=True, timeout=120)
+    subprocess.run(["sips", "-s", "format", "jpeg", "-s", "formatOptions", "80", "--resampleWidth", "1280", str(png),
+                    "--out", str(target)], capture_output=True)
+    png.unlink(missing_ok=True)
+    return target.exists()
+
+
+def cmd_shots(args: argparse.Namespace) -> None:
+    """Screenshot every finished attempt of a run into attempt-<n>/captures/screenshot.jpg."""
+    parts = args.target.strip("/").split("/")
+    run_dir = data_dir() / parts[0] / parts[1]
+    attempt_dirs = sorted(p.parent for p in run_dir.glob("*/attempt-*/attempt.json"))
+    if len(parts) > 2:
+        attempt_dirs = [d for d in attempt_dirs if d.parent.name.startswith(parts[2])]
+    if attempt_dirs:
+        register_demo(attempt_dirs)
+    for attempt_dir in attempt_dirs:
+        target = attempt_dir / "captures" / "screenshot.jpg"
+        if target.exists() and not args.force:
+            print(f"skip  {'/'.join(attempt_dir.parts[-2:])}", flush=True)
+            continue
+        app = App(attempt_dir)
+        try:
+            ok = app.start() and capture(f"http://127.0.0.1:{app.port}/", target)
+        finally:
+            app.stop()
+        print(f"{'shot' if ok else 'KO  '}  {'/'.join(attempt_dir.parts[-2:])}", flush=True)
+
+
+def cmd_stop(args: argparse.Namespace) -> None:
+    """Stop registered bench processes (runs and demo servers), all of them or those matching the filters."""
+    parts = (args.target or "").strip("/").split("/") if args.target else []
+    model, run, test = (parts + [None, None, None])[:3]
+    test = test or args.test
+
+    def matches(entry: dict) -> bool:
+        if args.runs and entry["kind"] != "run" or args.demos and entry["kind"] != "demo":
+            return False
+        if model and entry["model"] != model or run and entry["run"] != run:
+            return False
+        return not test or any(t == test or t.startswith(test + "-") or test.startswith(t + "-") for t in entry["tests"])
+
+    registered = registered_processes()
+    everything = registered + unregistered_processes({entry["pid"] for entry in registered})
+    selected = [entry for entry in everything if matches(entry) and entry["pid"] != os.getpid()]
+    public = lambda entry: {key: entry[key] for key in ("pid", "kind", "model", "run", "tests")}
+    if args.list and args.json:
+        print(json.dumps([public(entry) for entry in selected]))
+        return
+    if args.list:
+        for entry in selected:
+            print(f"{entry['kind']:<4} {entry['model']}/{entry['run']}  ({', '.join(entry['tests'])})  pid {entry['pid']}")
+        print(f"{len(selected)} running")
+        return
+    if not selected:
+        print("[]" if args.json else "Nothing to stop")
+        return
+    for entry in selected:
+        try:
+            os.kill(entry["pid"], signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    deadline = time.monotonic() + args.grace
+    while time.monotonic() < deadline and any(process_alive(entry["pid"]) for entry in selected):
+        time.sleep(0.2)
+    for entry in selected:
+        forced = process_alive(entry["pid"])
+        if forced:
+            try:
+                os.kill(entry["pid"], signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        for pgid in entry["groups"]:
+            kill_group(pgid)
+        (procs_dir() / f"{entry['pid']}.json").unlink(missing_ok=True)
+        entry["forced"] = forced
+        if args.json:
+            continue
+        tests = ", ".join(entry["tests"])
+        print(f"stopped {entry['kind']:<4} {entry['model']}/{entry['run']}  ({tests})  pid {entry['pid']}{'  (killed)' if forced else ''}")
+    if args.json:
+        print(json.dumps([{**public(entry), "forced": entry["forced"]} for entry in selected]))
 
 
 def main() -> None:
@@ -696,6 +906,7 @@ def main() -> None:
     run.add_argument("--category")
     run.add_argument("--ids", help="Comma-separated ids or prefixes (3d-06)")
     run.add_argument("--run", help="Existing run id, to add new attempts")
+    run.add_argument("--run-id", help="Id for a new run (default: <date>-<letter>)")
     run.add_argument("--timeout", type=float, help="Minutes per attempt")
     run.add_argument("--budget", type=float, help="USD per run")
     run.add_argument("--iterate", action="store_true", help="Continue from the latest attempt with a delta prompt")
@@ -710,11 +921,32 @@ def main() -> None:
     serve.add_argument("target", help="<model>/<run>")
     serve.add_argument("--port", type=int, default=5100)
     serve.set_defaults(func=cmd_serve)
+    start = sub.add_parser("start", help="Start one attempt and print its URL as JSON")
+    start.add_argument("target", help="<model>/<run>/<test>[/attempt-<n>]")
+    start.add_argument("--port", type=int)
+    start.set_defaults(func=cmd_start)
+    shots = sub.add_parser("shots", help="Screenshot the attempts of a run into captures/")
+    shots.add_argument("target", help="<model>/<run>[/<test>]")
+    shots.add_argument("--force", action="store_true", help="Replace existing captures")
+    shots.set_defaults(func=cmd_shots)
+
+    stop = sub.add_parser("stop", help="Stop runs and demo servers started by bench (all by default)")
+    stop.add_argument("target", nargs="?", help="<model>[/<run>[/<test>]] to narrow down")
+    stop.add_argument("--test", help="Every run and demo of one benchmark, any model (id or prefix, 3d-06)")
+    stop.add_argument("--runs", action="store_true", help="Only runs (agents)")
+    stop.add_argument("--demos", action="store_true", help="Only demo servers (start, open, serve, shots)")
+    stop.add_argument("--list", action="store_true", help="Only list what would be stopped")
+    stop.add_argument("--json", action="store_true", help="Machine-readable output (used by the cockpit)")
+    stop.add_argument("--grace", type=float, default=20, help="Seconds to let processes clean up before SIGKILL")
+    stop.set_defaults(func=cmd_stop)
     args = parser.parse_args()
     # Background shells ignore SIGINT and a plain SIGTERM would orphan the agent: route both to the cleanup path.
     signal.signal(signal.SIGINT, signal.default_int_handler)
     signal.signal(signal.SIGTERM, signal.default_int_handler)
-    args.func(args)
+    try:
+        args.func(args)
+    finally:
+        unregister()
 
 
 if __name__ == "__main__":

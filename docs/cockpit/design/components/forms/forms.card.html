@@ -1,0 +1,18 @@
+<!-- @dsCard group="Components" viewport="700x260" name="Forms" -->
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{padding:18px}.r{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}</style></head><body><div id="root"></div>
+<script type="text/babel">
+const NS = Object.values(window).find((v) => v && typeof v === 'object' && v.StatusBadge && v.Button) || {};
+const { Button, Input, Checkbox, Radio, Switch, Segmented, Chip } = NS;
+function App(){ const [s,setS]=React.useState('score'); const [b,setB]=React.useState(true); const [c,setC]=React.useState(true);
+return <div>
+<div className="r"><Button variant="primary">Lancer un run</Button><Button>Comparer</Button><Button variant="ghost">Tout</Button><Button variant="danger">Arrêter</Button><Button disabled>Ouvrir</Button><Button size="sm">sm</Button><Button size="lg" variant="primary">lg</Button></div>
+<div className="r"><Input placeholder="Filtrer par nom…" /><Segmented options={['score','prix','vitesse']} value={s} onChange={setS} /><Switch checked={b} onChange={setB} label="Mode aveugle" /></div>
+<div className="r"><Checkbox checked={c} onChange={setC} label="3d/black-hole" /><Radio checked label="anthropic/opus-5.5" /><Radio label="openai/gpt-5.2-codex" /><Chip active count="2">3d</Chip><Chip count="2">jeu</Chip></div>
+</div>; }
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>

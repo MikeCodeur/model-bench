@@ -1,0 +1,54 @@
+/* SEMANTIC — dark is the default theme. Light via [data-theme="light"] (or .light). */
+:root, [data-theme="dark"] {
+  --background: var(--zinc-950);
+  --card: var(--zinc-900);
+  --muted: var(--zinc-850);
+  --border: var(--zinc-800);
+  --input: var(--zinc-700);
+  --foreground: var(--zinc-50);
+  --muted-foreground: var(--zinc-400);
+  --subtle-foreground: var(--zinc-450);
+  --primary: var(--zinc-50);
+  --primary-foreground: var(--zinc-950);
+  --ring: var(--blue-500);
+  --active-foreground: var(--blue-400);
+  --accent: var(--blue-950);
+  --success: var(--green-400);
+  --success-soft: var(--green-950);
+  --warning: var(--amber-400);
+  --warning-soft: var(--amber-950);
+  --destructive: var(--red-400);
+  --destructive-soft: var(--red-950);
+  --stopped: var(--zinc-400);
+  --stopped-soft: var(--zinc-850);
+  --scrim: var(--black-60);
+  --overlay-label: var(--black-78);
+  --shadow-popover: 0 16px 40px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  --background: var(--zinc-50);
+  --card: var(--zinc-0);
+  --muted: var(--zinc-100);
+  --border: var(--zinc-200);
+  --input: var(--zinc-300);
+  --foreground: var(--zinc-950);
+  --muted-foreground: var(--zinc-600);
+  --subtle-foreground: var(--zinc-500);
+  --primary: var(--zinc-950);
+  --primary-foreground: var(--zinc-50);
+  --ring: var(--blue-600);
+  --active-foreground: var(--blue-700);
+  --accent: var(--blue-50);
+  --success: var(--green-700);
+  --success-soft: var(--green-50);
+  --warning: var(--amber-700);
+  --warning-soft: var(--amber-50);
+  --destructive: var(--red-700);
+  --destructive-soft: var(--red-50);
+  --stopped: var(--zinc-600);
+  --stopped-soft: var(--zinc-100);
+  --scrim: rgba(9, 9, 11, 0.4);
+  --shadow-popover: 0 16px 40px rgba(9, 9, 11, 0.12);
+  color-scheme: light;
+}

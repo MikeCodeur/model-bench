@@ -19,17 +19,9 @@ REQUIRED_FIELDS = {
     "acceptance",
     "capture",
 }
-EXPECTED_COUNTS = {
-    "3d": 14,
-    "simulation-2d": 4,
-    "math-visual": 4,
-    "algorithm-visual": 1,
-    "frontend": 9,
-    "game": 4,
-    "agentic-code": 4,
-}
+ALLOWED_CATEGORIES = {"3d", "simulation-2d", "math-visual", "algorithm-visual", "frontend", "game", "agentic-code"}
 ALLOWED_DIFFICULTIES = {"intermediate", "advanced"}
-ALLOWED_PROVENANCE = {"video-reconstructed", "original"}
+ALLOWED_PROVENANCE = {"video-reconstructed", "original", "external"}
 ALLOWED_CAPTURE = {"none", "screenshot", "video", "both"}
 
 
@@ -38,8 +30,9 @@ def validate() -> dict:
     benches = data.get("benchmarks", [])
     errors: list[str] = []
 
-    if len(benches) != 40:
-        errors.append(f"expected 40 benchmarks, found {len(benches)}")
+    for key in ("presentation", "controls", "launch"):
+        if not data.get("common_contract", {}).get(key):
+            errors.append(f"common_contract.{key} is missing")
 
     ids = [bench.get("id") for bench in benches]
     duplicates = sorted(key for key, count in Counter(ids).items() if count > 1)
@@ -57,14 +50,18 @@ def validate() -> dict:
             errors.append(f"{bench['id']}: invalid provenance")
         if bench["capture"] not in ALLOWED_CAPTURE:
             errors.append(f"{bench['id']}: invalid capture")
+        if bench["category"] not in ALLOWED_CATEGORIES:
+            errors.append(f"{bench['id']}: invalid category")
+        if bench["capture"] != "none" and len(bench.get("controls", [])) < 3:
+            errors.append(f"{bench['id']}: a project with a UI needs at least 3 controls")
         if len(bench["acceptance"]) < 3:
             errors.append(f"{bench['id']}: fewer than 3 acceptance criteria")
+        if bench["provenance"] == "external" and not (bench.get("source_url") and bench.get("license")):
+            errors.append(f"{bench['id']}: external benchmark needs source_url and license")
         if bench["provenance"] == "video-reconstructed" and not bench.get("video_timestamp"):
             errors.append(f"{bench['id']}: video timestamp required")
 
     counts = Counter(bench.get("category") for bench in benches)
-    if dict(counts) != EXPECTED_COUNTS:
-        errors.append(f"unexpected category counts: {dict(counts)}")
 
     if errors:
         raise SystemExit("\n".join(f"ERROR: {error}" for error in errors))

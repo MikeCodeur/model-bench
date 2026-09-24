@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "suite": "model-bench-core-40",
+  "suite": "model-bench-core",
   "status": "draft",
   "language": "fr",
   "source_video": {
@@ -46,6 +46,11 @@
     "fresh_context": true,
     "network": "disabled-during-render",
     "deliverables": ["README.md", "code source exécutable", "tests ou auto-checks pertinents"],
+    "presentation": [
+      "Affiche en haut de l'interface, en petit, le titre du projet et une phrase qui dit ce qu'il montre.",
+      "Affiche une aide courte des commandes disponibles (souris, clavier, boutons).",
+      "Ces éléments restent discrets, repliables, et ne masquent pas le rendu principal."
+    ],
     "controls": [
       "Expose ces réglages dans un panneau repliable, visible par défaut, modifiables en direct sans rechargement.",
       "Les valeurs par défaut produisent le rendu de référence décrit dans la mission.",
@@ -237,6 +242,32 @@
       "capture": "video"
     },
     {
+      "id": "3d-15-galaxy-collision",
+      "title": "Collision de galaxies",
+      "category": "3d",
+      "difficulty": "advanced",
+      "provenance": "original",
+      "brief": "Simuler en 3D une ou deux galaxies spirales composées de plusieurs dizaines de milliers d'étoiles, soumises à la gravité. Avec deux galaxies, on voit l'approche, le premier passage, les ponts et queues de marée, puis la fusion en un seul noyau. Avec une seule galaxie, on observe sa rotation stable. La simulation se rejoue à l'identique avec les mêmes réglages.",
+      "acceptance": [
+        "au moins 20 000 étoiles animées de façon fluide",
+        "queues de marée visibles après le premier passage",
+        "masse relative et angle d'impact changent visiblement la forme finale",
+        "fusion en un seul noyau en fin de simulation",
+        "caméra orbitale, pause, rejouer et reset"
+      ],
+      "capture": "video",
+      "controls": [
+        "nombre de galaxies (1 ou 2)",
+        "nombre d'étoiles",
+        "masse relative des deux galaxies",
+        "vitesse d'approche",
+        "paramètre d'impact (distance de passage)",
+        "inclinaison de chaque disque",
+        "sens de rotation (prograde ou rétrograde)",
+        "vitesse de la simulation"
+      ]
+    },
+    {
       "id": "sim-01-wildfire-cellular",
       "title": "Propagation d'un feu de forêt",
       "category": "simulation-2d",
@@ -245,6 +276,7 @@
       "video_timestamp": "19:47",
       "brief": "Créer une simulation 2D sur grille d'un feu de forêt. Densité, humidité, vent et nombre de départs sont réglables; afficher en direct les surfaces intacte, en feu et brûlée. Une graine fixe doit rendre le run reproductible.",
       "acceptance": ["propagation dépend du vent", "humidité réduit la propagation", "statistiques mises à jour", "seed fixe reproductible", "pause, pas-à-pas et reset"],
+      "controls": ["densité de la forêt", "humidité", "force et direction du vent", "nombre de départs de feu", "vitesse de simulation", "seed"],
       "capture": "video"
     },
     {
@@ -266,6 +298,7 @@
       "provenance": "original",
       "brief": "Créer une simulation de croissance cristalline produisant des flocons à symétrie hexagonale. Température, humidité et bruit modifient la morphologie; six presets peuvent être comparés côte à côte avec la même seed.",
       "acceptance": ["symétrie d'ordre six", "trois paramètres ont un effet visible", "six presets comparables", "seed reproductible", "export PNG"],
+      "controls": ["température", "humidité", "bruit", "vitesse de croissance", "seed"],
       "capture": "video"
     },
     {
@@ -277,6 +310,7 @@
       "video_timestamp": "23:10",
       "brief": "Construire un explorateur fluide de l'ensemble de Mandelbrot avec zoom au pointeur, pan, nombre d'itérations réglable, palettes commutables et historique de navigation. Afficher les coordonnées complexes et l'échelle.",
       "acceptance": ["calcul Mandelbrot correct", "zoom centré sur le pointeur", "pan sans reset", "palette et itérations réglables", "historique précédent/suivant"],
+      "controls": ["nombre d'itérations", "palette de couleurs", "lissage des couleurs", "zoom automatique vers un point remarquable"],
       "capture": "video"
     },
     {
@@ -310,6 +344,7 @@
       "provenance": "original",
       "brief": "Simuler deux sources d'ondes circulaires avec fréquence, phase et amplitude réglables. Afficher le champ instantané, l'intensité moyenne et les lignes nodales; proposer un mode double fente.",
       "acceptance": ["superposition constructive et destructive visible", "phase modifie les franges", "lignes nodales cohérentes", "mode double fente", "pause et pas temporel"],
+      "controls": ["fréquence de chaque source", "phase de chaque source", "amplitude de chaque source", "écart entre les sources", "mode double fente", "vitesse de l'animation"],
       "capture": "video"
     },
     {
@@ -320,6 +355,7 @@
       "provenance": "original",
       "brief": "Créer une simulation de boids avec séparation, alignement et cohésion, puis ajouter prédateurs et zones de nourriture. Les poids des règles sont modifiables et un graphe suit la taille des populations.",
       "acceptance": ["trois règles de flocking distinctes", "prédateurs poursuivent les proies", "nourriture influence les trajectoires", "poids réglables", "graphe population synchronisé"],
+      "controls": ["poids séparation, alignement et cohésion", "nombre de proies", "nombre de prédateurs", "vitesse maximale", "quantité de nourriture"],
       "capture": "video"
     },
     {
@@ -342,6 +378,7 @@
       "video_timestamp": "06:11",
       "brief": "Créer une landing page responsive pour un SaaS IA fictif qui transforme une user story en plan de tests. Le hero doit expliquer le produit en une phrase, montrer une démo animée, inclure preuve, fonctionnalités, pricing et CTA sans lorem ipsum.",
       "acceptance": ["proposition de valeur compréhensible sans scroll", "démo animée lisible", "pricing à trois plans", "navigation mobile fonctionnelle", "aucun overflow horizontal aux deux viewports"],
+      "controls": ["thème clair ou sombre", "variante du titre du hero (A/B)", "vitesse de la démo animée"],
       "capture": "both"
     },
     {
@@ -352,6 +389,7 @@
       "provenance": "original",
       "brief": "Créer un configurateur de casque audio avec choix de couleur, finition, accessoires et gravure. Le visuel, le prix et le récapitulatif changent instantanément; une URL partageable restaure exactement la configuration.",
       "acceptance": ["toutes les options modifient le visuel", "prix total correct", "résumé cohérent", "URL partageable restaure l'état", "clavier utilisable"],
+      "controls": ["angle de vue du casque (face, profil, trois-quarts)", "rotation automatique", "zoom sur le visuel"],
       "capture": "both"
     },
     {
@@ -362,6 +400,7 @@
       "provenance": "original",
       "brief": "Construire un dashboard de ventes avec filtres de période et canal, KPI, courbe, cohortes, table triable et état de chargement. Utiliser un dataset local cohérent; chaque vue doit refléter les mêmes données filtrées.",
       "acceptance": ["filtres affectent tous les widgets", "KPI recalculés correctement", "table triable", "états loading/empty/error", "responsive desktop/mobile"],
+      "controls": ["taille du dataset", "simuler un chargement lent", "simuler une erreur", "simuler l'absence de données"],
       "capture": "both"
     },
     {
@@ -372,6 +411,7 @@
       "provenance": "original",
       "brief": "Créer un calculateur de coût API comparant trois modèles fictifs. Entrées: tokens, cache hit, requêtes mensuelles et effort. Afficher coût détaillé, économie, seuil de rentabilité et graphique; les formules doivent être testées.",
       "acceptance": ["formules centralisées et testées", "tous les inputs recalculent en direct", "coût détaillé entrée/sortie/cache", "seuil de rentabilité", "formatage monétaire correct"],
+      "controls": ["prix unitaires de chaque modèle fictif", "devise (EUR ou USD)", "préréglages de scénarios (startup, PME, grand compte)"],
       "capture": "both"
     },
     {
@@ -382,6 +422,7 @@
       "provenance": "original",
       "brief": "Créer un Kanban local avec trois colonnes, ajout/édition de cartes, drag-and-drop clavier et souris, filtres par label et persistance navigateur. Fournir un historique undo/redo de dix actions.",
       "acceptance": ["CRUD complet des cartes", "drag-and-drop souris", "déplacement clavier accessible", "filtres par label", "persistance et undo/redo"],
+      "controls": ["recharger les données de démo", "densité d'affichage (compacte ou confortable)", "thème clair ou sombre"],
       "capture": "both"
     },
     {
@@ -392,6 +433,7 @@
       "provenance": "original",
       "brief": "Créer un parcours de réservation en quatre étapes: prestation, créneau, coordonnées, confirmation. Gérer timezone, créneaux indisponibles, retour arrière sans perte et validation accessible.",
       "acceptance": ["quatre étapes cohérentes", "créneaux indisponibles bloqués", "timezone visible et modifiable", "état préservé au retour", "erreurs reliées aux champs"],
+      "controls": ["fuseau horaire", "part de créneaux indisponibles", "durée de la prestation"],
       "capture": "both"
     },
     {
@@ -402,6 +444,7 @@
       "provenance": "original",
       "brief": "Créer un mini site de documentation contenant douze pages locales, navigation hiérarchique, recherche plein texte, raccourci Cmd/Ctrl-K, surlignage des résultats et ancres de titres partageables.",
       "acceptance": ["douze pages indexées", "recherche tolère casse et accents", "Cmd/Ctrl-K ouvre la palette", "résultats surlignés", "ancres et historique navigateur fonctionnent"],
+      "controls": ["thème clair ou sombre", "taille du texte", "surlignage des résultats on/off"],
       "capture": "both"
     },
     {
@@ -412,6 +455,7 @@
       "provenance": "original",
       "brief": "Créer un checkout responsive avec panier, adresse, livraison et paiement simulé. Priorité à l'accessibilité: ordre de tabulation, labels, annonces d'erreur, focus après validation et résumé avant confirmation.",
       "acceptance": ["parcours complet au clavier", "labels et erreurs accessibles", "focus déplacé vers la première erreur", "totaux exacts", "confirmation sans vraie transaction"],
+      "controls": ["simuler un refus de paiement", "simuler une erreur réseau", "pays de livraison", "code promo de démo"],
       "capture": "both"
     },
     {
@@ -422,6 +466,7 @@
       "provenance": "original",
       "brief": "Créer une page scrollytelling expliquant cinq ans de consommation électrique à partir d'un dataset local. Chaque section change le graphique, conserve les axes cohérents et met en évidence une conclusion vérifiable dans les données.",
       "acceptance": ["au moins quatre étapes narratives", "graphique synchronisé au scroll", "axes et unités cohérents", "conclusions calculables depuis le dataset", "fallback sans animation"],
+      "controls": ["vitesse de l'autoplay", "unité affichée (kWh ou MWh)", "mode sans animation"],
       "capture": "video"
     },
     {
@@ -433,6 +478,7 @@
       "video_timestamp": "16:46",
       "brief": "Créer un jeu de mots croisés sur le SEO à partir d'une liste locale de termes et définitions. Générer une grille valide, numéroter les indices, gérer navigation clavier, vérification lettre/mot/grille et sauvegarde de progression.",
       "acceptance": ["grille générée sans conflit de lettres", "indices horizontaux et verticaux numérotés", "navigation clavier naturelle", "vérification à trois niveaux", "progression persistée"],
+      "controls": ["taille de la grille", "nombre de mots", "niveau d'aide (révéler une lettre ou un mot)", "seed"],
       "capture": "both"
     },
     {
@@ -506,6 +552,7 @@
       "provenance": "original",
       "brief": "Construire un mini produit full-stack de feedback: créer une suggestion, voter une fois, filtrer par statut et permettre à un admin simulé de changer le statut. Fournir base locale, API, UI responsive, tests et scénario E2E principal.",
       "acceptance": ["création et vote persistés", "double vote empêché", "filtre de statut cohérent", "transition admin journalisée", "tests API, UI et E2E passent"],
+      "controls": ["rôle courant (utilisateur ou admin)", "simuler plusieurs utilisateurs", "recharger les données de démo"],
       "capture": "both"
     }
   ]

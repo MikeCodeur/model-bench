@@ -1,0 +1,2 @@
+{"opus-5-5": {"label": "Opus 5.5 (Claude Code)", "model_id": "claude-opus-5-5", "command": "claude -p {prompt}", "billing": "subscription"},
+ "haiku-4-5": {"label": "Haiku 4.5 (Claude Code)", "command": "claude -p {prompt}"}}

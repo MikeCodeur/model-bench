@@ -22,10 +22,15 @@ preparer = load_module("prepare_run", ROOT / "scripts" / "prepare-run.py")
 
 
 class ModelBenchTests(unittest.TestCase):
-    def test_catalog_has_exactly_40_valid_benchmarks(self):
+    def test_catalog_is_valid(self):
         result = validator.validate()
-        self.assertEqual(result["count"], 40)
-        self.assertEqual(sum(result["categories"].values()), 40)
+        self.assertEqual(sum(result["categories"].values()), result["count"])
+
+    def test_every_ui_project_has_controls(self):
+        data = preparer.load_catalog()
+        for bench in data["benchmarks"]:
+            if bench["capture"] != "none":
+                self.assertGreaterEqual(len(bench.get("controls", [])), 3, bench["id"])
 
     def test_prepare_two_selected_benchmarks(self):
         data = preparer.load_catalog()

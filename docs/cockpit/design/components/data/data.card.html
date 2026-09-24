@@ -1,0 +1,16 @@
+<!-- @dsCard group="Components" viewport="700x260" name="Data display" -->
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{padding:18px}.r{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}</style></head><body><div id="root"></div>
+<script type="text/babel">
+const NS = Object.values(window).find((v) => v && typeof v === 'object' && v.StatusBadge && v.Button) || {};
+const { StatusBadge, ScoreBar, SegmentBar, Stat, Kbd } = NS;
+ReactDOM.createRoot(document.getElementById('root')).render(<div>
+<div className="r">{['pending','running','done','nostart','error','timeout','stopped'].map(s=><StatusBadge key={s} status={s}/>)}<StatusBadge status="done" version="v2"/><Kbd>⌘K</Kbd></div>
+<div className="r" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:18}}><div style={{display:'grid',gap:8}}><ScoreBar label="fonctionnel" value={94} highlight/><ScoreBar label="visuel" value={93}/><ScoreBar label="engineering" value={88}/></div><SegmentBar labels items={[['done','black-hole'],['done','solar'],['nostart','fluids'],['done','boids'],['running','dashboard'],['pending','tetris'],['pending','api']].map(([status,label])=>({status,label}))}/></div>
+<div style={{display:'flex',border:'1px solid var(--border)',borderRadius:10,background:'var(--card)'}}><Stat label="progression" value="6/10"/><div style={{borderLeft:'1px solid var(--border)'}}><Stat label="coût" value="9.87 $" sub="en direct"/></div><div style={{borderLeft:'1px solid var(--border)'}}><Stat label="en cours" value="07:12" tone="active"/></div></div>
+</div>);
+</script></body></html>

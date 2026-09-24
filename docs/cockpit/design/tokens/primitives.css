@@ -1,0 +1,51 @@
+/* PRIMITIVES — raw values. Never use directly in components; go through semantic tokens. */
+:root {
+  /* Zinc — neutrals */
+  --zinc-0: #ffffff;
+  --zinc-50: #fafafa;
+  --zinc-100: #f4f4f5;
+  --zinc-200: #e4e4e7;
+  --zinc-300: #d4d4d8;
+  --zinc-400: #a1a1aa;
+  --zinc-450: #8b8b94;
+  --zinc-500: #6b6b73;
+  --zinc-600: #52525b;
+  --zinc-700: #3f3f46;
+  --zinc-750: #2c2c30;
+  --zinc-800: #232326;
+  --zinc-850: #1a1a1d;
+  --zinc-900: #111113;
+  --zinc-950: #09090b;
+
+  /* Blue — the only accent: active / running / focus */
+  --blue-50: #eff4ff;
+  --blue-300: #93c5fd;
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-950: #0f1b2e;
+
+  /* Green — delivered */
+  --green-50: #ecfdf3;
+  --green-400: #4ade80;
+  --green-700: #15803d;
+  --green-950: #0d2016;
+
+  /* Amber — timeout */
+  --amber-50: #fef7e0;
+  --amber-400: #fbbf24;
+  --amber-700: #a16207;
+  --amber-950: #271d07;
+
+  /* Red — error / does not start */
+  --red-50: #fef1f1;
+  --red-400: #f87171;
+  --red-700: #b91c1c;
+  --red-950: #2a1111;
+
+  /* Alpha */
+  --black-60: rgba(0, 0, 0, 0.6);
+  --black-78: rgba(0, 0, 0, 0.78);
+  --demo-black: #030304;
+}

@@ -1,0 +1,8 @@
+{
+  "suite": "model-bench-core",
+  "benchmarks": [
+    {"id": "3d-06-black-hole-lensing", "title": "Trou noir et disque d'accrétion", "category": "3d", "difficulty": "advanced", "provenance": "video-reconstructed", "video_timestamp": "14:58", "brief": "Rendre un trou noir.", "acceptance": ["horizon noir", "disque edge-on", "arcs de lentillage"], "capture": "video", "controls": ["masse", "lentillage", "inclinaison"]},
+    {"id": "web-01-ai-saas-landing", "title": "Landing page SaaS IA", "category": "frontend", "difficulty": "intermediate", "provenance": "original", "brief": "Créer une landing page.", "acceptance": ["hero", "pricing", "mobile"], "capture": "both", "controls": ["thème", "variante", "vitesse"]},
+    {"id": "agent-01-task-api", "title": "API de tâches testée", "category": "agentic-code", "difficulty": "intermediate", "provenance": "original", "brief": "Construire une API.", "acceptance": ["CRUD", "SQLite", "tests"], "capture": "none"}
+  ]
+}

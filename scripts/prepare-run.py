@@ -35,6 +35,10 @@ def render_prompt(bench: dict, contract: dict) -> str:
     criteria = "\n".join(f"- [ ] {item}" for item in bench["acceptance"])
     deliverables = "\n".join(f"- {item}" for item in contract["deliverables"])
     launch = "\n".join(f"- {item}" for item in contract["launch"])
+    presentation = ""
+    if bench["capture"] != "none":
+        rules = "\n".join(f"- {item}" for item in contract["presentation"])
+        presentation = f"## Présentation\n\n{rules}\n\n"
     controls = ""
     if bench.get("controls"):
         settings = "\n".join(f"- {item}" for item in bench["controls"])
@@ -64,7 +68,7 @@ Difficulty: `{bench['difficulty']}`
 
 {launch}
 
-{controls}## Critères d'acceptation
+{presentation}{controls}## Critères d'acceptation
 
 {criteria}
 
