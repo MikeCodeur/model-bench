@@ -5,15 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Pulse } from "./primitives";
+import { ServersMenu, type ServerItem } from "./servers-menu";
 import { css, sx } from "./style";
 import { ToastProvider, useToast } from "./toast";
 
-export type PaletteItem = { group: string; label: string; sub: string; href?: string; action?: "theme" | "stop" | "stopAll" | "stopDemos" | "syncCaptures"; model?: string };
+type ActionOutcome = { message: string };
 
-/** What bench has running right now: agent runs and demo servers. */
-export type Running = { runs: number; demos: number };
-
-type StopAll = (kind?: "run" | "demo") => Promise<{ message: string }>;
+/** A ⌘K entry: a link, the theme switch, or a (bound) server action. */
+export type PaletteItem = { group: string; label: string; sub: string; href?: string; theme?: true; act?: () => Promise<ActionOutcome> };
 
 export type LivePill = { model: string; progress: string; cost: string; running: boolean; href: string } | null;
 
@@ -34,7 +33,7 @@ function useThemeName(): "dark" | "light" {
   return hydrated && resolvedTheme === "light" ? "light" : "dark";
 }
 
-function TopBar({ live, running, onOpenPalette, onStopAll }: { live: LivePill; running: Running; onOpenPalette: () => void; onStopAll: () => void }) {
+function TopBar({ live, servers, models, onOpenPalette }: { live: LivePill; servers: ServerItem[]; models: string[]; onOpenPalette: () => void }) {
   const pathname = usePathname();
   const { setTheme } = useTheme();
   const theme = useThemeName();
@@ -86,19 +85,7 @@ function TopBar({ live, running, onOpenPalette, onStopAll }: { live: LivePill; r
             <span style={css("color:var(--fg-2)")}>{live.cost}</span>
           </Link>
         ) : null}
-        {running.runs + running.demos > 0 ? (
-          <button
-            onClick={onStopAll}
-            title={`Arrêter ${running.runs} run${running.runs > 1 ? "s" : ""} et ${running.demos} démo${running.demos > 1 ? "s" : ""}`}
-            {...sx(
-              "flex:none;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--fg-2);font:500 11.5px/1 var(--mono);cursor:pointer;white-space:nowrap",
-              "color:var(--err);border-color:var(--err)",
-            )}
-          >
-            <span style={css("width:7px;height:7px;background:currentColor;border-radius:1px")} />
-            {running.runs + running.demos}
-          </button>
-        ) : null}
+        <ServersMenu servers={servers} models={models} />
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           title="Changer de thème"
@@ -123,19 +110,7 @@ function TopBar({ live, running, onOpenPalette, onStopAll }: { live: LivePill; r
   );
 }
 
-function Palette({
-  items,
-  onClose,
-  onStop,
-  onStopAll,
-  onSyncCaptures,
-}: {
-  items: PaletteItem[];
-  onClose: () => void;
-  onStop: (model: string) => void;
-  onStopAll: (kind?: "demo") => void;
-  onSyncCaptures: () => void;
-}) {
+function Palette({ items, onClose, onAct }: { items: PaletteItem[]; onClose: () => void; onAct: (act: () => Promise<ActionOutcome>) => void }) {
   const router = useRouter();
   const { setTheme } = useTheme();
   const theme = useThemeName();
@@ -145,16 +120,13 @@ function Palette({
     const id = setTimeout(() => input.current?.focus(), 30);
     return () => clearTimeout(id);
   }, []);
-  const withTheme = items.map((item) => (item.action === "theme" ? { ...item, label: `Thème ${theme === "dark" ? "clair" : "sombre"}` } : item));
+  const withTheme = items.map((item) => (item.theme ? { ...item, label: `Thème ${theme === "dark" ? "clair" : "sombre"}` } : item));
   const q = query.trim().toLowerCase();
   const hits = withTheme.filter((item) => !q || `${item.label} ${item.sub} ${item.group}`.toLowerCase().includes(q)).slice(0, q ? 12 : 10);
   const run = (item: PaletteItem) => {
     onClose();
-    if (item.action === "theme") setTheme(theme === "dark" ? "light" : "dark");
-    else if (item.action === "stop" && item.model) onStop(item.model);
-    else if (item.action === "stopAll") onStopAll();
-    else if (item.action === "stopDemos") onStopAll("demo");
-    else if (item.action === "syncCaptures") onSyncCaptures();
+    if (item.theme) setTheme(theme === "dark" ? "light" : "dark");
+    else if (item.act) onAct(item.act);
     else if (item.href) router.push(item.href);
   };
   const rows: ReactNode[] = [];
@@ -206,49 +178,17 @@ function Palette({
 }
 
 /** Top bar, ⌘K palette and toasts around every page. */
-export function Shell({
-  live,
-  running,
-  palette,
-  onStop,
-  onStopAll,
-  onSyncCaptures,
-  children,
-}: {
-  live: LivePill;
-  running: Running;
-  palette: PaletteItem[];
-  onStop: (model: string) => Promise<{ message: string }>;
-  onStopAll: StopAll;
-  onSyncCaptures: () => Promise<{ message: string }>;
-  children: ReactNode;
-}) {
+export function Shell({ live, servers, models, palette, children }: { live: LivePill; servers: ServerItem[]; models: string[]; palette: PaletteItem[]; children: ReactNode }) {
   return (
     <ToastProvider>
-      <ShellInner live={live} running={running} palette={palette} onStop={onStop} onStopAll={onStopAll} onSyncCaptures={onSyncCaptures}>
+      <ShellInner live={live} servers={servers} models={models} palette={palette}>
         {children}
       </ShellInner>
     </ToastProvider>
   );
 }
 
-function ShellInner({
-  live,
-  running,
-  palette,
-  onStop,
-  onStopAll,
-  onSyncCaptures,
-  children,
-}: {
-  live: LivePill;
-  running: Running;
-  palette: PaletteItem[];
-  onStop: (model: string) => Promise<{ message: string }>;
-  onStopAll: StopAll;
-  onSyncCaptures: () => Promise<{ message: string }>;
-  children: ReactNode;
-}) {
+function ShellInner({ live, servers, models, palette, children }: { live: LivePill; servers: ServerItem[]; models: string[]; palette: PaletteItem[]; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const toast = useToast();
   const router = useRouter();
@@ -262,30 +202,15 @@ function ShellInner({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  const stopAll = async (kind?: "run" | "demo") => {
-    toast(kind === "demo" ? "Arrêt des démos…" : "Arrêt de tous les runs et démos…");
-    toast((await onStopAll(kind)).message);
+  const act = async (run: () => Promise<ActionOutcome>) => {
+    toast((await run()).message);
     router.refresh();
   };
   return (
     <>
-      <TopBar live={live} running={running} onOpenPalette={() => setOpen(true)} onStopAll={() => stopAll()} />
+      <TopBar live={live} servers={servers} models={models} onOpenPalette={() => setOpen(true)} />
       {children}
-      {open ? (
-        <Palette
-          items={palette}
-          onClose={() => setOpen(false)}
-          onStop={async (model) => {
-            toast((await onStop(model)).message);
-            router.refresh();
-          }}
-          onStopAll={stopAll}
-          onSyncCaptures={async () => {
-            toast((await onSyncCaptures()).message);
-            router.refresh();
-          }}
-        />
-      ) : null}
+      {open ? <Palette items={palette} onClose={() => setOpen(false)} onAct={act} /> : null}
     </>
   );
 }

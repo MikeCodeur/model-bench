@@ -65,10 +65,19 @@ export function isRunnerAlive(model: string): boolean {
   }
 }
 
-export type BenchStopFilter = { kind?: BenchProcessKind; model?: string };
+export type BenchStopFilter = { kind?: BenchProcessKind; model?: string; run?: string; test?: string; pid?: number };
 
+/** `bench stop` argv: target `model[/run[/test]]`, or `--test` across models, or one `--pid`. */
 function stopArgs(filter: BenchStopFilter): string[] {
-  return ["stop", ...(filter.model ? [filter.model] : []), ...(filter.kind === "run" ? ["--runs"] : filter.kind === "demo" ? ["--demos"] : []), "--json"];
+  const target = filter.model ? [[filter.model, filter.run, filter.run ? filter.test : undefined].filter(Boolean).join("/")] : [];
+  return [
+    "stop",
+    ...target,
+    ...(filter.test && !filter.model ? ["--test", filter.test] : []),
+    ...(filter.pid !== undefined ? ["--pid", String(filter.pid)] : []),
+    ...(filter.kind === "run" ? ["--runs"] : filter.kind === "demo" ? ["--demos"] : []),
+    "--json",
+  ];
 }
 
 /** Every process started by `bench` (cockpit or terminal), via `bench stop --list`. */

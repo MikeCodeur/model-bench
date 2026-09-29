@@ -1,11 +1,12 @@
 import { getAttemptDao } from "@/db/repositories/attempt-repository";
+import { stopBenchProcesses } from "@/lib/bench-cli";
 import { listDemoProcesses, startDemoProcess, stopDemoProcess, type DemoStart } from "@/lib/demo-process";
 import { NotFoundError, ValidationError } from "@/services/errors/service-errors";
 import type { AttemptRef } from "@/services/types/domain/attempt-types";
 import { attemptRefSchema, parseOrThrow } from "@/services/validation/ref-validation";
 
-/** Demos kept running at once; the oldest stops when a new one starts beyond this. */
-const MAX_DEMOS = 6;
+/** Demos kept running at once; the oldest stops when a new one starts beyond this. Room for a whole run of two models. */
+const MAX_DEMOS = 40;
 
 const targetOf = (ref: AttemptRef) => `${ref.model}/${ref.run}/${ref.test}/attempt-${ref.number}`;
 
@@ -23,6 +24,9 @@ export async function startDemoService(input: AttemptRef): Promise<DemoStart> {
   return startDemoProcess(target);
 }
 
+/** Stop the demo of one attempt, whether the cockpit or a terminal (`bench start`) started it. */
 export async function stopDemoService(input: AttemptRef): Promise<void> {
-  stopDemoProcess(targetOf(parseOrThrow(attemptRefSchema, input)));
+  const ref = parseOrThrow(attemptRefSchema, input);
+  stopDemoProcess(targetOf(ref));
+  await stopBenchProcesses({ kind: "demo", model: ref.model, run: ref.run, test: ref.test });
 }

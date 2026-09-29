@@ -3,14 +3,16 @@ import { benchmarkCardsDal, compareDal, runDetailsDal, voteDal } from "@/app/dal
 import { voteAction } from "@/app/comparer/actions";
 import { ActionButton } from "@/components/ck/action-button";
 import { Crumbs } from "@/components/ck/crumbs";
-import { DemoFrame } from "@/components/ck/demo-frame";
+import { DemoStage } from "@/components/ck/demo-frame";
 import { duration, harness, money, tokens } from "@/components/ck/format";
 import { ST, chip } from "@/components/ck/status";
 import { css, sx } from "@/components/ck/style";
-import { captureUrl, compareHref } from "@/components/ck/urls";
+import { captureUrl, compareHref, resultHref } from "@/components/ck/urls";
 import type { CompareRowKey } from "@/services/compare-service";
 
 const LETTERS = "ABCD";
+const STAGE = "position:relative;aspect-ratio:4/3;background:#030304;border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden";
+const LETTER = "position:absolute;left:8px;top:8px;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.72);color:#fafafa;font:600 11.5px/1 var(--mono)";
 const ROW_LABELS: Record<CompareRowKey, string> = {
   rating: "note",
   checks: "contrôles",
@@ -152,9 +154,17 @@ export default async function ComparerPage({ searchParams }: { searchParams: Pro
               >
                 <div style={css("display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:11px 12px")}>
                   <div style={css("min-width:0")}>
-                    <div style={css("font:600 13.5px/1.25 var(--mono)")}>
-                      {blind ? `Résultat ${LETTERS[index]}` : `${slot.attempt.model}${versioned ? ` · v${slot.attempt.number}` : ""}`}
-                    </div>
+                    {blind ? (
+                      <div style={css("font:600 13.5px/1.25 var(--mono)")}>Résultat {LETTERS[index]}</div>
+                    ) : (
+                      <Link
+                        href={resultHref(slot.attempt)}
+                        title="Voir le détail de ce résultat"
+                        {...sx("display:block;font:600 13.5px/1.25 var(--mono);color:var(--fg);text-decoration:none", "text-decoration:underline")}
+                      >
+                        {`${slot.attempt.model}${versioned ? ` · v${slot.attempt.number}` : ""}`}
+                      </Link>
+                    )}
                     <div style={css("margin-top:3px;font:400 12px/1.2 var(--mono);color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>
                       {blind ? "identité masquée" : `${slot.attempt.run} · via ${harness(slot.model?.tool ?? "?", slot.attempt.cliVersion)}`}
                     </div>
@@ -176,18 +186,18 @@ export default async function ComparerPage({ searchParams }: { searchParams: Pro
                     </Link>
                   ) : null}
                 </div>
-                <div style={css("position:relative;aspect-ratio:4/3;background:#030304;border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden")}>
-                  {ok ? (
-                    <DemoFrame attempt={slot.attempt} capture={slot.attempt.hasCapture ? captureUrl(slot.attempt) : null} />
-                  ) : (
+                {ok ? (
+                  <DemoStage attempt={slot.attempt} capture={slot.attempt.hasCapture ? captureUrl(slot.attempt) : null} style={STAGE}>
+                    <span style={css(LETTER)}>{LETTERS[index]}</span>
+                  </DemoStage>
+                ) : (
+                  <div style={css(STAGE)}>
                     <div style={css("position:absolute;inset:0;display:grid;place-items:center;background:#0b0b0c;color:#fafafa;font:600 13px/1.3 var(--mono)")}>
                       {st.g} {st.label}
                     </div>
-                  )}
-                  <span style={css("position:absolute;left:8px;top:8px;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.72);color:#fafafa;font:600 11.5px/1 var(--mono)")}>
-                    {LETTERS[index]}
-                  </span>
-                </div>
+                    <span style={css(LETTER)}>{LETTERS[index]}</span>
+                  </div>
+                )}
                 <div style={css("padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px")}>
                   <span
                     style={css(
@@ -197,15 +207,28 @@ export default async function ComparerPage({ searchParams }: { searchParams: Pro
                     <span>{st.g}</span>
                     {st.label}
                   </span>
-                  <ActionButton
-                    action={voteAction.bind(null, test, current, slot.key, blind)}
-                    disabled={n < 2}
-                    style={css(
-                      `height:28px;padding:0 10px;border:1px solid ${preferred ? "var(--accent)" : "var(--border-strong)"};border-radius:6px;background:${preferred ? "var(--accent-soft)" : "transparent"};color:${preferred ? "var(--accent-text)" : "var(--fg)"};font:600 12.5px/1 var(--sans);cursor:pointer`,
+                  <span style={css("display:flex;align-items:center;gap:6px")}>
+                    {blind ? null : (
+                      <Link
+                        href={resultHref(slot.attempt)}
+                        {...sx(
+                          "display:inline-flex;align-items:center;height:28px;padding:0 10px;border:1px solid var(--border-strong);border-radius:6px;background:transparent;color:var(--fg);font:500 12.5px/1 var(--sans);cursor:pointer;text-decoration:none",
+                          "background:var(--surface-2)",
+                        )}
+                      >
+                        Ouvrir →
+                      </Link>
                     )}
-                  >
-                    {preferred ? "✓ préféré" : "Je préfère"}
-                  </ActionButton>
+                    <ActionButton
+                      action={voteAction.bind(null, test, current, slot.key, blind)}
+                      disabled={n < 2}
+                      style={css(
+                        `height:28px;padding:0 10px;border:1px solid ${preferred ? "var(--accent)" : "var(--border-strong)"};border-radius:6px;background:${preferred ? "var(--accent-soft)" : "transparent"};color:${preferred ? "var(--accent-text)" : "var(--fg)"};font:600 12.5px/1 var(--sans);cursor:pointer`,
+                      )}
+                    >
+                      {preferred ? "✓ préféré" : "Je préfère"}
+                    </ActionButton>
+                  </span>
                 </div>
               </section>
             );

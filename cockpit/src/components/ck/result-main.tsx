@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { startDemoAction } from "@/app/runs/demo-actions";
+import { startDemoAction, stopDemoAction } from "@/app/runs/demo-actions";
 import { iterateAction } from "@/app/runs/actions";
 import type { AttemptRef, Checks, DisplayState } from "@/services/types/domain/attempt-types";
 import { Stars } from "./stars";
@@ -53,8 +53,19 @@ export function ResultMain({
   const [pending, startTransition] = useTransition();
   const showDemo = state === "done";
   const key = `${attempt.model}/${attempt.run}/${attempt.test}/${attempt.number}`;
-  const [started, setStarted] = useState<{ key: string; url: string | null; error: string | null } | null>(null);
-  const demo = started?.key === key ? started : { url: null, error: null };
+  const [started, setStarted] = useState<{ key: string; url: string | null; error: string | null; stopped?: boolean } | null>(null);
+  const demo = started?.key === key ? started : { url: null, error: null, stopped: false };
+  const starting = showDemo && !demo.url && !demo.error && !demo.stopped;
+  const startServer = () => {
+    setStarted({ key, url: null, error: null });
+    startDemoAction(attempt).then((result) => setStarted(result.ok ? { key, url: result.url, error: null } : { key, url: null, error: result.error }));
+  };
+  const stopServer = () =>
+    startTransition(async () => {
+      await stopDemoAction(attempt);
+      setStarted({ key, url: null, error: null, stopped: true });
+      toast("Serveur arrêté");
+    });
   useEffect(() => {
     if (!showDemo) return;
     let live = true;
@@ -67,7 +78,16 @@ export function ResultMain({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, showDemo]);
   const st = ST[state];
-  const host = demo.url ? demo.url.replace(/^https?:\/\//, "").replace(/\/$/, "") : demo.error ? "démo indisponible" : showDemo ? "démarrage…" : "pas de démo";
+  const host = demo.url
+    ? demo.url.replace(/^https?:\/\//, "").replace(/\/$/, "")
+    : demo.stopped
+      ? "serveur arrêté"
+      : demo.error
+        ? "démo indisponible"
+        : showDemo
+          ? "démarrage…"
+          : "pas de démo";
+  const serverDot = demo.url ? "var(--ok)" : starting ? "var(--warn)" : showDemo ? "var(--fg-3)" : st.fg;
   const subs: [string, boolean | null][] = checks
     ? [
         ["terminé", checks.finished],
@@ -95,7 +115,7 @@ export function ResultMain({
       <section style={css("border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden")}>
         <div style={css("display:flex;align-items:center;justify-content:space-between;gap:12px;height:40px;padding:0 12px;border-bottom:1px solid var(--border)")}>
           <span style={css("display:flex;align-items:center;gap:9px;font:400 12.5px/1 var(--mono);color:var(--fg-2)")}>
-            <span style={css(`width:7px;height:7px;border-radius:50%;background:${st.fg}`)} />
+            <span style={css(`width:7px;height:7px;border-radius:50%;background:${serverDot}`)} />
             {host} · {attempt.test} · v{attempt.number}
           </span>
           <div style={css("display:flex;gap:6px")}>
@@ -112,6 +132,17 @@ export function ResultMain({
                   Nouvelle fenêtre ↗
                 </a>
               </>
+            ) : null}
+            {showDemo ? (
+              demo.url ? (
+                <button onClick={stopServer} disabled={pending} title="Arrêter le serveur de cette démo" {...sx(STAGE_BUTTON, "color:var(--err);border-color:var(--err)")}>
+                  ■ Arrêter
+                </button>
+              ) : (
+                <button onClick={startServer} disabled={starting} title="Démarrer le serveur de cette démo" {...sx(STAGE_BUTTON, STAGE_BUTTON_HOVER)}>
+                  {starting ? "démarrage…" : "▶ Démarrer"}
+                </button>
+              )
             ) : null}
             <button onClick={() => stage.current?.requestFullscreen?.()} {...sx(STAGE_BUTTON, STAGE_BUTTON_HOVER)}>
               Plein écran

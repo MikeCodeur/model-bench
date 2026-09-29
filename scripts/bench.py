@@ -204,7 +204,8 @@ def registered_processes() -> list[dict]:
     return entries
 
 
-BENCH_COMMAND = re.compile(r"bench\.py (run|start|open|serve|shots)\b(.*)")
+# Only a Python interpreter running bench.py counts, not a shell or an editor whose command line mentions it.
+BENCH_COMMAND = re.compile(r"^\S*python[0-9.]*\s+\S*bench\.py (run|start|open|serve|shots)\b(.*)", re.IGNORECASE)
 
 
 def unregistered_processes(known: set[int]) -> list[dict]:
@@ -213,11 +214,14 @@ def unregistered_processes(known: set[int]) -> list[dict]:
     entries = []
     for line in result.stdout.splitlines():
         pid_text, _, command = line.strip().partition(" ")
-        match = BENCH_COMMAND.search(command)
+        match = BENCH_COMMAND.match(command)
         pid = int(pid_text)
         if not match or pid in known or pid == os.getpid():
             continue
-        argv = shlex.split(match.group(2))
+        try:
+            argv = shlex.split(match.group(2))
+        except ValueError:  # ps drops the original quoting: a --delta with an apostrophe is no longer valid shell
+            argv = match.group(2).split()
         if match.group(1) == "run":
             option = lambda name: argv[argv.index(name) + 1] if name in argv[:-1] else None
             model, run = option("--model"), option("--run") or option("--run-id")
@@ -907,6 +911,8 @@ def cmd_stop(args: argparse.Namespace) -> None:
     test = test or args.test
 
     def matches(entry: dict) -> bool:
+        if args.pid is not None:
+            return entry["pid"] == args.pid
         if args.runs and entry["kind"] != "run" or args.demos and entry["kind"] != "demo":
             return False
         if model and entry["model"] != model or run and entry["run"] != run:
@@ -997,6 +1003,7 @@ def main() -> None:
     stop.add_argument("--test", help="Every run and demo of one benchmark, any model (id or prefix, 3d-06)")
     stop.add_argument("--runs", action="store_true", help="Only runs (agents)")
     stop.add_argument("--demos", action="store_true", help="Only demo servers (start, open, serve, shots)")
+    stop.add_argument("--pid", type=int, help="Only this bench process (as listed by --list)")
     stop.add_argument("--list", action="store_true", help="Only list what would be stopped")
     stop.add_argument("--json", action="store_true", help="Machine-readable output (used by the cockpit)")
     stop.add_argument("--grace", type=float, default=20, help="Seconds to let processes clean up before SIGKILL")

@@ -43,6 +43,17 @@ python3 scripts/prepare-run.py --model provider/model --ids 3d-06-black-hole-len
 
 Run validation and tests after every catalog edit.
 
+## Declaring a new model
+
+Every new model must work end to end: run, journal, costs, demos, start/stop, cockpit. Checklist:
+
+1. **Exact model id.** Take it from the provider's docs or the CLI's own model list (`~/.codex/models_cache.json` for Codex), never guess. Key in `models.json`: short kebab id (`sonnet-5-5`, `gpt-6-astra`).
+2. **`models.json` entry.** `label` ("Name (Harness)"), `model_id`, `command` with `{prompt}`, `version_command`, `parser`, `billing`. Copy the isolation flags of a model on the same harness: Claude Code `--setting-sources "" --strict-mcp-config --disable-slash-commands --no-session-persistence --output-format stream-json --verbose`; Codex `exec --ignore-user-config --ignore-rules --ephemeral --skip-git-repo-check --json` with `env.CODEX_HOME` pointing to the isolated home.
+3. **New harness only.** Add its usage parser in `scripts/bench.py` (`parse_usage`), its transcript format in the cockpit journal (`parseAgentLog` in `cockpit/src/services/attempt-service.ts`), its name in `TOOLS` and its provider in `initialsOf` (`cockpit/src/services/model-service.ts`), with a test for each.
+4. **Smoke test.** One tiny real call with the exact command in an empty temp dir ("Réponds uniquement: ok"). Check the answer, the model id reported by the CLI, and that no personal config leaks in.
+5. **Start / stop.** Nothing to code: every `bench` process registers itself, so `bench stop` (all, `<model>`, `<model>/<run>`, `--test`, `--demos`, `--runs`, `--pid`), `bench start` and the cockpit's Serveurs panel ("Démarrer les démos · <model>", per-run ▶/■ Démos, per-result ▶/■) pick the model up from `models.json`. Verify after the first run: `pnpm bench stop --list` lists it while it runs, `pnpm bench stop <model>` stops it.
+6. **Checks.** `pnpm test`, then the model appears in the cockpit's launch page and leaderboard.
+
 ## Run outputs
 
 Never write run outputs inside the repository.

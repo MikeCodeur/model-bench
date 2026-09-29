@@ -37,7 +37,9 @@ class BenchTests(unittest.TestCase):
             try:
                 run, run_child = fake_bench(Path(tmp), "run", "opus-5-5", "3d-06-black-hole-lensing")
                 demo, demo_child = fake_bench(Path(tmp), "demo", "haiku-4-5", "web-01-ai-saas-landing")
-                stop = lambda **kw: bench.cmd_stop(argparse.Namespace(**{"target": None, "test": None, "runs": False, "demos": False, "list": False, "json": False, "grace": 5, **kw}))
+                stop = lambda **kw: bench.cmd_stop(argparse.Namespace(**{"target": None, "test": None, "runs": False, "demos": False, "list": False, "json": False, "pid": None, "grace": 5, **kw}))
+                self.assertEqual(bench.cmd_stop(argparse.Namespace(target=None, test=None, runs=False, demos=False, list=False, json=False, pid=-1, grace=5)), None)
+                self.assertIsNone(run.poll(), "a pid that matches nothing stops nothing")
                 stop(test="3d-06")
                 self.assertIsNotNone(run.wait(5))
                 self.assertIsNotNone(run_child.wait(5))
@@ -81,6 +83,24 @@ class BenchTests(unittest.TestCase):
         env = bench.model_env({"env": {"CODEX_HOME": "~/model-bench-data/.harness/codex"}})
         self.assertEqual(env["CODEX_HOME"], str(Path.home() / "model-bench-data/.harness/codex"))
         self.assertIn("PATH", env)
+
+    def test_unregistered_scan_survives_unbalanced_quotes(self):
+        script = Path(tempfile.mkdtemp()) / "bench.py"
+        script.write_text("import time\ntime.sleep(60)\n")
+        proc = subprocess.Popen(["python3", str(script), "run", "--model", "m", "--run", "2026-09-24-a", "--ids", "3d-06",
+                                 "--delta", "ajoute l'ombre"])
+        try:
+            found = [e for e in bench.unregistered_processes(set()) if e["pid"] == proc.pid]
+            self.assertEqual((found[0]["kind"], found[0]["model"], found[0]["tests"]), ("run", "m", ["3d-06"]))
+        finally:
+            proc.kill()
+
+    def test_shells_mentioning_bench_are_not_bench_processes(self):
+        shell = subprocess.Popen(["sh", "-c", "sleep 60; echo scripts/bench.py run --model m --ids 3d-06"])
+        try:
+            self.assertEqual([e for e in bench.unregistered_processes(set()) if e["pid"] == shell.pid], [])
+        finally:
+            shell.kill()
 
     def test_stale_registration_is_dropped(self):
         with tempfile.TemporaryDirectory() as tmp:

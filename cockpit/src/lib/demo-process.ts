@@ -6,7 +6,7 @@ import { env } from "@/env";
 
 export type DemoStart = { ok: true; url: string } | { ok: false; error: string };
 
-type RunningDemo = { key: string; child: ChildProcess; ready: Promise<DemoStart>; startedAt: number };
+type RunningDemo = { key: string; child: ChildProcess; ready: Promise<DemoStart>; startedAt: number; url: string | null };
 
 const START_TIMEOUT_MS = 240_000;
 
@@ -40,7 +40,11 @@ export function startDemoProcess(target: string): Promise<DemoStart> {
       resolve({ ok: false, error: "Le processus de démo s'est arrêté." });
     });
   });
-  registry.set(target, { key: target, child, ready, startedAt: Date.now() });
+  const demo: RunningDemo = { key: target, child, ready, startedAt: Date.now(), url: null };
+  registry.set(target, demo);
+  ready.then((result) => {
+    if (result.ok) demo.url = result.url;
+  });
   return ready;
 }
 
@@ -55,6 +59,6 @@ export function stopDemoProcess(target: string): void {
   registry.delete(target);
 }
 
-export function listDemoProcesses(): { key: string; startedAt: number }[] {
-  return [...registry.values()].map(({ key, startedAt }) => ({ key, startedAt }));
+export function listDemoProcesses(): { key: string; startedAt: number; url: string | null; pid: number | null }[] {
+  return [...registry.values()].map(({ key, startedAt, url, child }) => ({ key, startedAt, url, pid: child.pid ?? null }));
 }

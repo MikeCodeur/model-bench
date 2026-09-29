@@ -3,6 +3,7 @@ import { buildJournal, getJournalService, listCodeFilesService, parseAgentLog } 
 import { bestAttempt, checksOf, displayState, scoreOf } from "@/services/attempt-state";
 import { NotFoundError, ValidationError } from "@/services/errors/service-errors";
 import { rateAttemptService } from "@/services/rating-service";
+import { demoTargetsService } from "@/services/server-service";
 import { compareService } from "@/services/compare-service";
 import { estimateLaunchService } from "@/services/estimate-service";
 import { homeService } from "@/services/home-service";
@@ -157,5 +158,16 @@ describe("estimates, comparison, home", () => {
     const home = await homeService(new Date("2026-09-30T12:00:00Z"));
     expect(home).toMatchObject({ runsThisMonth: 1, runningRuns: 0, delivered: 1, finished: 2 });
     expect(home.fastest?.number).toBe(2);
+  });
+});
+
+describe("servers", () => {
+  it("serves the latest delivered attempt of each benchmark of a run, never a running one", async () => {
+    const targets = await demoTargetsService({ model: "opus-5-5", run: "2026-09-23-a" });
+    expect(targets.map((attempt) => `${attempt.test}/${attempt.number}`)).toEqual(["3d-06-black-hole-lensing/2"]);
+  });
+
+  it("refuses an invalid scope", async () => {
+    await expect(demoTargetsService({ model: "Opus 5.5" })).rejects.toBeInstanceOf(ValidationError);
   });
 });

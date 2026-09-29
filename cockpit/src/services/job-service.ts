@@ -1,13 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { jobLogPath, listJobsDao, saveJobDao } from "@/db/repositories/job-repository";
 import { listRunsDao } from "@/db/repositories/run-repository";
-import { benchArgs, isProcessAlive, isRunnerAlive, listBenchProcesses, spawnBench, stopBenchProcesses, type BenchCommand } from "@/lib/bench-cli";
+import { benchArgs, isProcessAlive, isRunnerAlive, spawnBench, stopBenchProcesses, type BenchCommand } from "@/lib/bench-cli";
 import { listBenchmarksService } from "@/services/benchmark-service";
 import { ConflictError, NotFoundError } from "@/services/errors/service-errors";
 import { listModelsService } from "@/services/model-service";
 import { getRunService, listRunDetailsService } from "@/services/run-service";
 import type { Job, JobKind } from "@/services/types/domain/job-types";
-import type { BenchProcess, BenchProcessKind } from "@/services/types/domain/process-types";
 import { iterateSchema, launchRunSchema, retryTestSchema, runRefInputSchema } from "@/services/validation/job-validation";
 import { modelIdSchema, parseOrThrow } from "@/services/validation/ref-validation";
 
@@ -102,7 +101,7 @@ export async function iterateService(input: { model: string; run: string; test: 
   return start("iterate", { kind: "iterate", model, run, tests: [test], delta }, run);
 }
 
-async function closeJobs(model?: string) {
+export async function closeJobs(model?: string) {
   const now = new Date().toISOString();
   for (const job of await listJobsDao()) {
     if ((!model || job.model === model) && !job.stoppedAt) await saveJobDao({ ...job, stoppedAt: now });
@@ -130,19 +129,6 @@ export async function syncCapturesService(): Promise<Job> {
   const active = await listActiveJobsService();
   if (active.some((job) => job.kind === "shots")) throw new ConflictError("Les captures sont déjà en cours de synchronisation");
   return (await start("shots", { kind: "shots", model: "*", tests: [] }, null)).job;
-}
-
-/** Runs and demo servers started by bench, from the cockpit or a terminal. */
-export async function listBenchProcessesService(): Promise<BenchProcess[]> {
-  return listBenchProcesses();
-}
-
-/** Stop all runs and demo servers, or only one kind. */
-export async function stopAllService(input: { kind?: BenchProcessKind } = {}): Promise<BenchProcess[]> {
-  const kind = input.kind === "run" || input.kind === "demo" ? input.kind : undefined;
-  const stopped = await stopBenchProcesses({ kind });
-  if (kind !== "demo") await closeJobs();
-  return stopped;
 }
 
 export async function listActiveJobsService(): Promise<Job[]> {
